@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}[hidden]{display:none!important}body{margin:0}</style>
+<title>Bayi Model Stok Raporu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Düzen: üstte filtre çubuğu, altında kaydırılabilir bayi x model tablosu; telefonda ilk sütun ve başlık sabit. */
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eceef2;
+  --line: #d9dce3;
+  --fg: #16202e;
+  --fg-2: #4b5667;
+  --fg-3: #77818f;
+  --accent: #0b5cad;
+  --accent-fg: #ffffff;
+  --miss-bg: #fbdcd8;
+  --miss-fg: #a3231a;
+  --miss-solid: #c62f24;
+  --depo-bg: #dbe9f8;
+  --depo-fg: #174a85;
+  --kons-bg: #fbe9c4;
+  --kons-fg: #7a4c00;
+  --both-bg: #d4ecd9;
+  --both-fg: #1b5e2f;
+  --unk-bg: #e7e9ee;
+  --unk-fg: #5d6674;
+  --warn-bg: #fff3d6;
+  --warn-fg: #6b4700;
+  --font-head: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --surface: #171e28; --surface-2: #202938; --line: #2b3546;
+    --fg: #e7ebf2; --fg-2: #aeb7c6; --fg-3: #8590a1; --accent: #6aaef2; --accent-fg: #0a1a2e;
+    --miss-bg: #4a1f1d; --miss-fg: #ffb4ab; --miss-solid: #ff7a6e;
+    --depo-bg: #1b3556; --depo-fg: #a9ccf5; --kons-bg: #4a3710; --kons-fg: #f2cf84;
+    --both-bg: #1c4228; --both-fg: #a6e0b3; --unk-bg: #262e3b; --unk-fg: #9aa4b4;
+    --warn-bg: #3d3010; --warn-fg: #f2d68e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #171e28; --surface-2: #202938; --line: #2b3546;
+  --fg: #e7ebf2; --fg-2: #aeb7c6; --fg-3: #8590a1; --accent: #6aaef2; --accent-fg: #0a1a2e;
+  --miss-bg: #4a1f1d; --miss-fg: #ffb4ab; --miss-solid: #ff7a6e;
+  --depo-bg: #1b3556; --depo-fg: #a9ccf5; --kons-bg: #4a3710; --kons-fg: #f2cf84;
+  --both-bg: #1c4228; --both-fg: #a6e0b3; --unk-bg: #262e3b; --unk-fg: #9aa4b4;
+  --warn-bg: #3d3010; --warn-fg: #f2d68e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.45;
+  padding-block: 14px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1500px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+h1 { font-family: var(--font-head); font-weight: 700; font-size: 22px; letter-spacing: .01em; margin: 0; }
+.top { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; justify-content: space-between; }
+.sub { color: var(--fg-2); font-size: 12.5px; margin-top: 2px; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn { min-height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.notice { background: var(--warn-bg); color: var(--warn-fg); border: 1px solid color-mix(in srgb, var(--warn-fg) 25%, transparent); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.notice b { font-weight: 600; }
+.notice .err { color: var(--miss-fg); }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.kpi .v { font-family: var(--font-head); font-size: 26px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi .v.miss { color: var(--miss-solid); }
+.kpi .l { color: var(--fg-2); font-size: 12px; margin-top: 2px; }
+
+.filters { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; min-height: 40px; padding: 0 14px; font-weight: 500; color: var(--fg-2); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.field label, .field .lbl { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-3); font-family: var(--font-head); font-weight: 600; }
+.field select, .field input[type="search"] { min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 0 10px; min-width: 0; max-width: 100%; }
+.chk { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; color: var(--fg-2); font-size: 13px; }
+.chk input { width: 18px; height: 18px; accent-color: var(--accent); }
+.grow { flex: 1 1 200px; }
+.sp { flex: 1 1 0; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--fg-2); align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 22px; height: 16px; border-radius: 4px; display: inline-block; }
+.sw.miss { background: var(--miss-bg); box-shadow: inset 0 0 0 1px var(--miss-solid); }
+.sw.depo { background: var(--depo-bg); } .sw.kons { background: var(--kons-bg); } .sw.both { background: var(--both-bg); }
+.sw.unk { background: repeating-linear-gradient(135deg, var(--unk-bg) 0 4px, var(--surface) 4px 7px); box-shadow: inset 0 0 0 1px var(--line); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.mxwrap { overflow: auto; max-height: calc(100dvh - 120px); min-height: 280px; border-radius: 10px; -webkit-overflow-scrolling: touch; }
+table.mx { border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; width: max-content; min-width: 100%; }
+.mx th, .mx td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 0; background: var(--surface); }
+.mx thead th { position: sticky; z-index: 3; background: var(--surface-2); font-family: var(--font-head); font-weight: 600; font-size: 11.5px; line-height: 1.2; vertical-align: bottom; }
+.mx thead tr.r1 th { top: 0; height: 26px; text-align: center; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-2); }
+.mx thead tr.r2 th { top: 26px; height: 56px; padding: 4px; min-width: 66px; max-width: 80px; word-break: break-word; }
+.mx thead tr.r3 th { top: 82px; height: 26px; font-weight: 500; color: var(--fg-2); }
+.mx thead th.corner { left: 0; z-index: 5; min-width: 168px; max-width: 168px; text-align: left; padding-left: 10px; }
+.mx td.dealer, .mx th.dealer { position: sticky; left: 0; z-index: 2; min-width: 168px; max-width: 168px; background: var(--surface); padding: 6px 8px 6px 10px; text-align: left; font-weight: 400; }
+.dn { font-weight: 600; font-size: 12.5px; line-height: 1.25; overflow-wrap: anywhere; display: flex; gap: 6px; align-items: flex-start; justify-content: space-between; }
+.dm { color: var(--fg-3); font-size: 11px; }
+.pill { flex: none; background: var(--miss-bg); color: var(--miss-fg); border-radius: 10px; padding: 0 6px; font-size: 11px; font-weight: 600; line-height: 18px; min-width: 20px; text-align: center; }
+.tag { font-size: 10px; background: var(--unk-bg); color: var(--unk-fg); border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+.mx td.c { text-align: center; height: 44px; min-width: 66px; font-size: 13px; }
+.cell { display: flex; align-items: center; justify-content: center; gap: 3px; height: 100%; padding: 0 4px; font-weight: 600; }
+.cell i { font-style: normal; font-weight: 600; }
+.cell .k { opacity: .95; }
+.c.plain { background: var(--surface); color: var(--fg); font-size: 14px; font-weight: 500; }
+.sl { font-size: 10px; font-weight: 500; opacity: .75; letter-spacing: .02em; }
+.cell .sl + i { margin-right: 4px; }
+.c.both, .c.have { background: var(--both-bg); color: var(--both-fg); }
+.c.depo { background: var(--depo-bg); color: var(--depo-fg); }
+.c.kons { background: var(--kons-bg); color: var(--kons-fg); }
+.c.miss { background: var(--miss-bg); color: var(--miss-fg); box-shadow: inset 0 0 0 1px var(--miss-solid); font-weight: 700; font-size: 12px; letter-spacing: .06em; }
+.c.unk { background: repeating-linear-gradient(135deg, var(--unk-bg) 0 4px, var(--surface) 4px 8px); color: var(--unk-fg); }
+.c.depoq { background: var(--depo-bg); color: var(--depo-fg); }
+.mx tr.grp td { position: static; background: var(--surface-2); font-family: var(--font-head); font-weight: 600; font-size: 12.5px; height: 30px; border-right: 0; }
+.mx tr.grp td span { position: sticky; left: 10px; display: inline-block; white-space: nowrap; }
+.mx th.mh .n { display: block; }
+.mx th.mh.off { color: var(--fg-3); }
+.mx th.mh .dot { color: var(--fg-3); font-weight: 400; }
+.mx tfoot td { position: sticky; bottom: 0; background: var(--surface-2); font-weight: 600; text-align: center; height: 30px; z-index: 2; }
+.mx tfoot td.dealer { z-index: 4; }
+
+.list { display: flex; flex-direction: column; gap: 8px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.card h3 { margin: 0; font-size: 14px; font-weight: 600; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.card h3 small { font-weight: 400; color: var(--fg-3); font-size: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { border-radius: 6px; padding: 3px 8px; font-size: 12.5px; font-weight: 500; background: var(--miss-bg); color: var(--miss-fg); box-shadow: inset 0 0 0 1px var(--miss-solid); }
+.chip.unk { background: var(--unk-bg); color: var(--unk-fg); box-shadow: none; }
+.chip.nb { background: var(--surface-2); color: var(--fg); box-shadow: none; }
+.chip .br { opacity: .7; font-size: 11px; margin-right: 4px; }
+.subl { font-size: 11.5px; color: var(--fg-3); margin-top: 8px; }
+.grouph { font-family: var(--font-head); font-weight: 600; font-size: 13px; color: var(--fg-2); letter-spacing: .04em; text-transform: uppercase; margin: 8px 2px 0; }
+.empty { padding: 28px 16px; text-align: center; color: var(--fg-2); }
+
+.info { font-size: 12.5px; color: var(--fg-2); }
+.info h2 { font-family: var(--font-head); font-size: 14px; margin: 0 0 6px; color: var(--fg); }
+.info ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.info .panel { padding: 12px 14px; }
+.drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px; text-align: center; color: var(--fg-2); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 20; max-width: calc(100vw - 32px); }
+.notice summary { cursor: pointer; }
+@media (max-width: 560px) {
+  h1 { font-size: 19px; }
+  .kpis { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .kpi { padding: 8px 10px; }
+  .kpi .v { font-size: 20px; }
+  .kpi .l { font-size: 11px; }
+  .kpi.hm { display: none; }
+  .filters { gap: 8px 10px; padding: 10px; }
+  .field.grow { flex-basis: 100%; }
+  .mx thead th.corner, .mx td.dealer, .mx th.dealer { min-width: 148px; max-width: 148px; }
+  .seg button { padding: 0 11px; }
+  .mxwrap { max-height: calc(100dvh - 90px); }
+}
+@media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s; } }
+</style>
+</head>
+<body>
+
+
+<div class="wrap" id="app">
+  <div class="top">
+    <div>
+      <h1>Bayi Model Stok Raporu</h1>
+      <div class="sub" id="asof">Veri yükleniyor…</div>
+    </div>
+    <div class="tools">
+      <button class="btn" id="btnUpdate" type="button">Excel ile güncelle</button>
+      <button class="btn primary" id="btnExport" type="button">Excel indir</button>
+    </div>
+  </div>
+
+  <div id="updatePanel" class="panel info" hidden>
+    <div class="panel" style="border:0;padding:0">
+      <h2>Excel ile güncelle</h2>
+      <div class="drop">
+        <p style="margin:0 0 8px">Yeni stok dosyasını seçin. Birden fazla dosya seçebilirsiniz (örneğin Şase Numaraları içeren dosya ile güncel Bayi Stok dosyası). Gerekli sayfa adları: Bayi Stok (tüm satırlar) ve Şase Numaraları.</p>
+        <input type="file" id="file" accept=".xlsx,.xlsm" multiple>
+      </div>
+      <div id="updMsg" style="margin-top:8px"></div>
+      <div id="updActions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap" hidden>
+        <button class="btn primary" id="btnShare" type="button">Herkes için kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="coverage"></div>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="filters">
+    <div class="field">
+      <span class="lbl">Marka</span>
+      <div class="seg" id="brandSeg" role="group" aria-label="Marka">
+        <button type="button" data-v="ALL" aria-pressed="true">Tümü</button>
+        <button type="button" data-v="BAJAJ" aria-pressed="false">Bajaj</button>
+        <button type="button" data-v="KANUNİ" aria-pressed="false">Kanuni</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="selPk">Plasiyer</label>
+      <select id="selPk"></select>
+    </div>
+    <div class="field grow">
+      <label for="q">Bayi veya şehir ara</label>
+      <input type="search" id="q" placeholder="Örn. Hatay, Kayalar" autocomplete="off">
+    </div>
+    <div class="field">
+      <span class="lbl">Görünüm</span>
+      <div class="seg" id="viewSeg" role="group" aria-label="Görünüm">
+        <button type="button" data-v="matrix" aria-pressed="true">Tablo</button>
+        <button type="button" data-v="bayi" aria-pressed="false">Bayiye göre eksikler</button>
+        <button type="button" data-v="model" aria-pressed="false">Modele göre eksikler</button>
+      </div>
+    </div>
+    <label class="chk"><input type="checkbox" id="onlyMiss"> Yalnız eksiği olan bayiler</label>
+    <label class="chk" id="splitWrap"><input type="checkbox" id="splitChk"> Bayi depo ve konsinyeyi ayrı göster</label>
+  </div>
+
+  <div class="legend" id="legend">
+    <span><i class="sw miss"></i><b>YOK</b> = bayi depoda da konsinyede de yok</span>
+    <span id="lgBoth"><i class="sw both"></i>İkisinde de var</span>
+    <span id="lgHave"><b>Sayı</b> = bayide bulunan adet (bayi depo + konsinye)</span>
+    <span id="lgDepo"><i class="sw depo"></i>Yalnız bayi depo</span>
+    <span id="lgKons"><i class="sw kons"></i>Yalnız konsinye</span>
+    <span id="lgUnk" hidden><i class="sw unk"></i>Stok bilgisi yok</span>
+    <span id="lgCell" hidden></span>
+  </div>
+
+  <div id="main"></div>
+
+  <div class="info"><div class="panel" id="foot"></div></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script>
+/* Stok Excel'ini okuyup bayi x model veri setine çevirir. Tarayıcıda ve Node'da aynı kod çalışır. */
+(function (root) {
+  'use strict';
+
+  var norm = function (s) {
+    return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/ı/g, 'i').toLowerCase().replace(/\s+/g, ' ').trim();
+  };
+
+  function val(c) {
+    if (!c) return null;
+    var v = c.value;
+    if (v == null) return null;
+    if (typeof v === 'object' && !(v instanceof Date)) {
+      if (v.richText) return v.richText.map(function (t) { return t.text; }).join('');
+      if ('result' in v) return v.result;
+      if (v.text != null) return v.text;
+    }
+    return v;
+  }
+
+  function grid(ws) {
+    var rows = [], nc = ws.columnCount;
+    for (var i = 1; i <= ws.rowCount; i++) {
+      var r = ws.getRow(i), a = [];
+      for (var j = 1; j <= nc; j++) a.push(val(r.getCell(j)));
+      rows.push(a);
+    }
+    return rows;
+  }
+
+  function findSheet(wb, pred) {
+    for (var i = 0; i < wb.worksheets.length; i++) if (pred(norm(wb.worksheets[i].name))) return wb.worksheets[i];
+    return null;
+  }
+
+  var num = function (x) { var n = Number(x); return isFinite(n) ? n : 0; };
+  var txt = function (x) { return x == null ? '' : String(x).trim(); };
+
+  /* "Şase Numaraları" sayfası: BAYİ DEPO ve KONSİNYE bölümleri, satır başına bir şase */
+  function parseChassis(g) {
+    var sec = null, hdr = null, depo = [], kons = [];
+    g.forEach(function (r) {
+      var a = norm(r[0]);
+      if (a === 'bayi depo' && r[1] == null) { sec = 'd'; hdr = null; return; }
+      if (a === 'konsinye' && r[1] == null) { sec = 'k'; hdr = null; return; }
+      if (!sec) return;
+      if (!hdr) {
+        if (a === 'cari kodu') { hdr = {}; r.forEach(function (h, j) { if (h != null) hdr[norm(h)] = j; }); }
+        return;
+      }
+      var cari = txt(r[hdr['cari kodu']]);
+      if (!cari) return;
+      var rec = {
+        c: cari, n: txt(r[hdr['cari isim']]), s: txt(r[hdr['sehir']]),
+        pl: txt(r[hdr['plasiyer']]), pk: txt(r[hdr['pla.kodu']]),
+        b: txt(r[hdr['marka']]), m: txt(r[hdr['model']])
+      };
+      (sec === 'd' ? depo : kons).push(rec);
+    });
+    return { depo: depo, kons: kons };
+  }
+
+  /* "Bayi Stok" / "Stok Olmayan": bayi x model toplam adet matrisi (bayi depo + konsinye) */
+  function parseMatrix(g) {
+    var h = -1;
+    for (var i = 0; i < g.length; i++) if (norm(g[i][0]) === 'pla.kodu' && norm(g[i][2]) === 'cari kodu') { h = i; break; }
+    if (h < 1) return null;
+    var cols = [];
+    g[h].forEach(function (m, j) {
+      if (j >= 5 && m != null && txt(m) && norm(m) !== 'adet') cols.push({ j: j, n: txt(m), b: txt(g[h - 1][j]) });
+    });
+    var rows = [];
+    for (var k = h + 1; k < g.length; k++) {
+      var r = g[k];
+      if (!/^B\d+$/i.test(txt(r[0]))) continue;
+      var vals = {};
+      cols.forEach(function (c) { vals[c.b + '|' + c.n] = num(r[c.j]); });
+      rows.push({ pk: txt(r[0]), pl: txt(r[1]), c: txt(r[2]), n: txt(r[3]), s: txt(r[4]), vals: vals });
+    }
+    return { cols: cols, rows: rows };
+  }
+
+  /* "Model" sayfası: stok kodu durumları ve plasiyer genel toplamları */
+  function parseModelSheet(g) {
+    var h = -1;
+    for (var i = 0; i < g.length; i++) if (g[i].some(function (x) { return norm(x) === 'stok_statu'; })) { h = i; break; }
+    if (h < 0) return null;
+    var H = g[h], col = function (name, from) {
+      for (var j = from || 0; j < H.length; j++) if (norm(H[j]) === name) return j; return -1;
+    };
+    var cB = col('marka'), cM = col('model'), cS = col('stok_statu');
+    var dC = col('bayi depo'), kC = col('konsinye');
+    var status = {}, tot = { depo: null, kons: null };
+    for (var k = h + 1; k < g.length; k++) {
+      var r = g[k];
+      if (norm(r[3]) === 'genel toplam' && dC >= 0) { tot.depo = num(r[dC]); tot.kons = num(r[kC]); }
+      var b = txt(r[cB]), m = txt(r[cM]), s = norm(r[cS]);
+      if (!m || !s || norm(m) === 'genel toplam' || norm(b) === 'genel toplam') continue;
+      var key = b + '|' + m;
+      status[key] = status[key] || [];
+      status[key].push(s);
+    }
+    return { status: status, tot: tot };
+  }
+
+  function parseWorkbooks(wbs, meta) {
+    meta = meta || {};
+    var ch = null, mats = [], ms = null;
+    wbs.forEach(function (wb) {
+      var shC = findSheet(wb, function (n) { return n.indexOf('sase') >= 0; });
+      if (shC) { var c = parseChassis(grid(shC)); if (c.depo.length) ch = c; }
+      [findSheet(wb, function (n) { return n === 'bayi stok'; }), findSheet(wb, function (n) { return n === 'stok olmayan'; })]
+        .filter(Boolean).forEach(function (s) { var m = parseMatrix(grid(s)); if (m && m.rows.length) mats.push(m); });
+      var shM = findSheet(wb, function (n) { return n === 'model'; });
+      if (shM) { var p = parseModelSheet(grid(shM)); if (p) ms = p; }
+    });
+    if (!ch && !mats.length) throw new Error('Dosyada "Bayi Stok" veya "Şase Numaraları" sayfası bulunamadı.');
+    var split = !!ch;
+    ch = ch || { depo: [], kons: [] };
+
+    var models = [], mIdx = {};
+    function addModel(b, n) {
+      var key = b + '|' + n;
+      if (mIdx[key] == null) { mIdx[key] = models.length; models.push({ b: b, n: n, act: null, tot: 0 }); }
+      return mIdx[key];
+    }
+    mats.forEach(function (m) { m.cols.forEach(function (c) { addModel(c.b, c.n); }); });
+    ch.depo.concat(ch.kons).forEach(function (r) { addModel(r.b, r.m); });
+    if (ms) Object.keys(ms.status).forEach(function (key) { var p = key.split('|'); addModel(p[0], p[1]); });
+    if (ms) models.forEach(function (m) { var st = ms.status[m.b + '|' + m.n]; if (st) m.act = st.indexOf('aktif') >= 0; });
+    var M = models.length;
+
+    var dealers = [], dIdx = {};
+    function dealer(c, n, s, pk, pl) {
+      if (dIdx[c] == null) {
+        dIdx[c] = dealers.length;
+        dealers.push({ c: c, n: n, s: s, pk: pk, pl: pl, d: new Array(M).fill(0), kc: new Array(M).fill(0), mat: null });
+      }
+      var d = dealers[dIdx[c]];
+      if (!d.n && n) d.n = n; if (!d.s && s) d.s = s; if (!d.pk && pk) d.pk = pk; if (!d.pl && pl) d.pl = pl;
+      return d;
+    }
+    ch.depo.forEach(function (r) { dealer(r.c, r.n, r.s, r.pk, r.pl).d[mIdx[r.b + '|' + r.m]]++; });
+    ch.kons.forEach(function (r) { dealer(r.c, r.n, r.s, r.pk, r.pl).kc[mIdx[r.b + '|' + r.m]]++; });
+
+    /* matrisler sırayla işlenir; aynı bayi birden çok matriste varsa sonraki dosya geçerli olur */
+    mats.forEach(function (m) {
+      m.rows.forEach(function (r) {
+        var d = dealer(r.c, r.n, r.s, r.pk, r.pl);
+        d.pk = r.pk || d.pk; d.pl = r.pl || d.pl;
+        var arr = new Array(M).fill(0);
+        Object.keys(r.vals).forEach(function (key) { arr[mIdx[key]] = r.vals[key]; });
+        d.mat = arr;
+      });
+    });
+
+    var konsChassis = ch.kons.length;
+    var konsReported = ms && ms.tot.kons != null ? ms.tot.kons : null;
+    var konsComplete = split && konsReported != null && konsReported > 0 && konsChassis >= 0.9 * konsReported;
+
+    var anomalies = 0;
+    dealers.forEach(function (d) {
+      if (d.mat) {
+        d.kn = 1; d.t = d.mat;
+        if (split) d.k = d.mat.map(function (t, i) {
+          if (t < d.d[i]) { anomalies++; return d.kc[i]; }
+          return Math.max(t - d.d[i], d.kc[i]);
+        }); else d.k = null;
+      } else if (konsComplete) { d.kn = 2; d.k = d.kc.slice(); d.t = d.d.map(function (x, i) { return x + d.k[i]; }); }
+      else { d.kn = 0; d.k = null; d.t = null; }
+      if (!split) d.d = null;
+      delete d.mat; delete d.kc;
+      var src = d.t || d.d;
+      if (src) src.forEach(function (x, i) { models[i].tot += x; });
+    });
+    models.forEach(function (m) { m.z = m.tot === 0 ? 1 : 0; });
+    dealers.sort(function (a, b) { return (a.pk || 'Z').localeCompare(b.pk || 'Z') || a.n.localeCompare(b.n, 'tr'); });
+
+    var depoTot = 0; if (split) dealers.forEach(function (d) { d.d.forEach(function (x) { depoTot += x; }); });
+    var stats = {
+      split: split, dealers: dealers.length,
+      known: dealers.filter(function (d) { return d.kn > 0; }).length,
+      depoChassis: ch.depo.length, depoReported: ms ? ms.tot.depo : null,
+      konsChassis: konsChassis, konsReported: konsReported, konsComplete: konsComplete,
+      matrixDealers: dealers.filter(function (d) { return d.kn === 1; }).length,
+      anomalies: anomalies
+    };
+    return { v: 2, asOf: meta.asOf || new Date().toISOString(), source: meta.source || '', models: models, dealers: dealers, stats: stats };
+  }
+  function parseWorkbook(wb, meta) { return parseWorkbooks([wb], meta); }
+
+  var api = { parseWorkbook: parseWorkbook, parseWorkbooks: parseWorkbooks, norm: norm };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ReportCore = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var EMBEDDED = {"v":2,"asOf":"2026-11-09T11:50:46.060Z","source":"stoklar.xlsx + Kanuni_Bayi_Stok","models":[{"b":"BAJAJ","n":"DOMİNAR 400","act":true,"tot":103,"z":0},{"b":"BAJAJ","n":"DOMİNAR D250","act":true,"tot":145,"z":0},{"b":"BAJAJ","n":"PULSAR F 250","act":true,"tot":79,"z":0},{"b":"BAJAJ","n":"PULSAR N 125","act":true,"tot":122,"z":0},{"b":"BAJAJ","n":"PULSAR N 160","act":true,"tot":76,"z":0},{"b":"BAJAJ","n":"PULSAR N 250","act":true,"tot":90,"z":0},{"b":"BAJAJ","n":"PULSAR NS 400","act":true,"tot":97,"z":0},{"b":"BAJAJ","n":"PULSAR NS125 ABS","act":true,"tot":210,"z":0},{"b":"BAJAJ","n":"PULSAR NS125 CBS","act":true,"tot":76,"z":0},{"b":"BAJAJ","n":"PULSAR NS200","act":true,"tot":205,"z":0},{"b":"BAJAJ","n":"PULSAR RS200","act":true,"tot":400,"z":0},{"b":"KANUNİ","n":"MATİ 125","act":true,"tot":249,"z":0},{"b":"KANUNİ","n":"NEV 50","act":null,"tot":0,"z":1},{"b":"KANUNİ","n":"REHA 250","act":false,"tot":8,"z":0},{"b":"KANUNİ","n":"RESA 125","act":true,"tot":112,"z":0},{"b":"KANUNİ","n":"SEHA 125","act":true,"tot":85,"z":0},{"b":"KANUNİ","n":"SEHA 150","act":true,"tot":72,"z":0},{"b":"KANUNİ","n":"SEHA 250","act":true,"tot":70,"z":0},{"b":"KANUNİ","n":"TRODON SX","act":false,"tot":51,"z":0},{"b":"KANUNİ","n":"TRODON SX 125","act":false,"tot":50,"z":0},{"b":"KANUNİ","n":"eTRODON","act":false,"tot":41,"z":0}],"dealers":[{"c":"MY001405","n":"AHMET KİREMİTÇİ","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[3,3,1,4,0,1,3,3,1,4,4,4,0,0,3,1,1,1,1,1,1],"kn":1,"t":[4,4,1,4,2,2,3,8,1,6,10,4,0,0,3,1,1,1,1,1,1],"k":[1,1,0,0,2,1,0,5,0,2,6,0,0,0,0,0,0,0,0,0,0]},{"c":"MY001373","n":"BAYMOTO","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[0,0,0,0,0,0,2,0,1,0,0,0,0,0,0,0,0,0,0,0,1],"kn":1,"t":[1,2,1,1,1,1,2,6,2,1,7,1,0,0,0,1,1,1,0,0,1],"k":[1,2,1,1,1,1,0,6,1,1,7,1,0,0,0,1,1,1,0,0,0]},{"c":"MY002387","n":"ÇETİN MOTOR","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[1,1,1,2,1,0,1,0,1,0,0,2,0,0,2,2,1,1,0,0,1],"kn":1,"t":[1,1,1,2,1,1,1,2,1,2,3,2,0,0,2,2,1,1,0,0,1],"k":[0,0,0,0,0,1,0,2,0,2,3,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003136","n":"DALGAN GIDA","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[1,0,0,1,1,0,1,0,0,1,1,1,0,0,1,0,0,0,2,0,0],"kn":1,"t":[2,2,1,2,1,1,1,6,0,3,16,1,0,0,1,1,0,1,2,0,0],"k":[1,2,1,1,0,1,0,6,0,2,15,0,0,0,0,1,0,1,0,0,0]},{"c":"MY003066","n":"EA MOTO GARAGE","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[1,1,1,2,0,0,0,1,0,1,2,2,0,0,1,1,1,0,0,0,0],"kn":1,"t":[1,1,1,2,1,1,1,2,1,1,2,3,0,0,1,1,1,1,0,0,0],"k":[0,0,0,0,1,1,1,1,1,0,0,1,0,0,0,0,0,1,0,0,0]},{"c":"MY003226","n":"ERENCE AA MOTO GARAGE","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[2,2,1,2,2,1,0,4,0,2,0,6,0,0,1,1,1,2,0,0,0],"kn":1,"t":[3,3,1,2,2,1,1,4,0,6,10,6,0,0,1,1,1,2,0,0,0],"k":[1,1,0,0,0,0,1,0,0,4,10,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003183","n":"KAFKAS MOTORLU","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[4,8,1,5,0,0,4,1,1,1,5,2,0,0,0,3,1,2,0,0,0],"kn":1,"t":[4,8,1,5,0,1,4,8,1,1,8,4,0,0,0,3,1,2,0,0,0],"k":[0,0,0,0,0,1,0,7,0,0,3,2,0,0,0,0,0,0,0,0,0]},{"c":"MY000412","n":"KAYALAR","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[1,3,1,2,1,1,2,3,1,1,2,0,0,0,2,1,1,1,0,0,1],"kn":1,"t":[2,4,1,2,1,2,2,6,2,5,9,1,0,0,2,1,1,1,0,0,1],"k":[1,1,0,0,0,1,0,3,1,4,7,1,0,0,0,0,0,0,0,0,0]},{"c":"MY003220","n":"KUZEY PREMİUM","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],"kn":1,"t":[1,2,1,1,1,1,0,3,1,1,8,1,0,0,0,1,0,1,0,1,0],"k":[1,2,0,1,1,1,0,3,1,1,8,1,0,0,0,1,0,1,0,0,0]},{"c":"MY003250","n":"MEPA ARAÇ","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[2,9,1,1,1,1,2,7,1,5,14,0,0,0,2,1,1,3,0,0,0],"kn":1,"t":[2,10,1,1,1,1,2,10,1,8,22,1,0,0,2,1,1,4,0,0,0],"k":[0,1,0,0,0,0,0,3,0,3,8,1,0,0,0,0,0,1,0,0,0]},{"c":"MY003222","n":"MUSTAFA OKTAY","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[0,0,1,1,2,1,0,0,0,6,0,0,0,0,1,1,1,1,0,0,0],"kn":1,"t":[0,1,1,1,2,1,0,1,1,6,2,1,0,0,1,1,1,1,0,0,0],"k":[0,1,0,0,0,0,0,1,1,0,2,1,0,0,0,0,0,0,0,0,0]},{"c":"MY001404","n":"PEKER MOTOR","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[1,2,1,2,1,1,2,5,1,0,0,3,0,0,1,3,1,1,0,2,1],"kn":1,"t":[1,2,1,2,1,2,2,7,1,4,8,3,0,0,1,3,1,1,0,2,1],"k":[0,0,0,0,0,1,0,2,0,4,8,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003003","n":"PENTA MOTOR","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[1,1,1,1,1,2,3,5,1,0,1,4,0,0,1,1,0,1,3,0,0],"kn":1,"t":[1,2,1,2,1,2,3,5,1,3,5,5,0,0,1,1,0,2,3,0,0],"k":[0,1,0,1,0,0,0,0,0,3,4,1,0,0,0,0,0,1,0,0,0]},{"c":"MY000779","n":"TRAKYAM MOTOR","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[3,2,1,1,1,1,1,0,1,2,6,5,0,0,2,2,1,1,0,0,0],"kn":1,"t":[3,2,1,2,1,1,1,5,1,2,6,5,0,0,2,2,1,1,0,0,0],"k":[0,0,0,1,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002514","n":"VOLKAN IŞIK","s":"ISTANBUL","pk":"B01","pl":"ALİ GONENC","d":[5,5,4,3,3,3,2,3,3,9,4,11,0,1,5,1,0,1,3,4,0],"kn":1,"t":[6,5,5,5,5,5,2,19,5,18,26,12,0,1,6,2,1,2,3,4,0],"k":[1,0,1,2,2,2,0,16,2,9,22,1,0,0,1,1,1,1,0,0,0]},{"c":"MY003119","n":"A TUNÇÇELİK YAPI","s":"OSMANIYE","pk":"B02","pl":"ALİ KOBUZ","d":[0,1,0,1,1,0,1,0,0,0,0,0,0,0,1,1,1,1,0,0,0],"kn":1,"t":[1,1,1,1,1,1,1,2,1,1,2,1,0,0,1,1,1,1,0,0,0],"k":[1,0,1,0,0,1,0,2,1,1,2,1,0,0,0,0,0,0,0,0,0]},{"c":"MY000071","n":"ALİ KEMAL YİĞİTBAŞ","s":"HATAY","pk":"B02","pl":"ALİ KOBUZ","d":[0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,0,0,0],"kn":1,"t":[0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,0,0,0],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000373","n":"ATEŞOĞLU TİC.","s":"HATAY","pk":"B02","pl":"ALİ KOBUZ","d":[2,1,1,1,2,1,1,0,1,0,1,3,0,0,0,1,1,0,1,0,0],"kn":1,"t":[2,1,1,1,2,1,1,0,1,0,1,3,0,0,1,1,1,0,1,0,0],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0]},{"c":"MY002816","n":"BURAK MOTOR","s":"GAZIANTEP","pk":"B02","pl":"ALİ KOBUZ","d":[0,0,1,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0],"kn":1,"t":[1,1,1,1,0,1,1,2,1,1,2,1,0,0,0,0,0,0,0,0,0],"k":[1,1,0,1,0,0,0,2,0,1,2,1,0,0,0,0,0,0,0,0,0]},{"c":"MY002818","n":"BURHAN DOĞAN","s":"DIYARBAKIR","pk":"B02","pl":"ALİ KOBUZ","d":[2,1,1,1,1,1,1,2,0,2,4,7,0,0,4,0,0,0,2,1,1],"kn":1,"t":[2,1,1,1,1,1,1,2,0,2,4,7,0,0,4,0,0,0,2,1,1],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000265","n":"GİZERLER","s":"ADANA","pk":"B02","pl":"ALİ KOBUZ","d":[1,1,3,3,1,2,5,1,1,1,1,3,0,1,1,0,1,2,2,11,4],"kn":1,"t":[2,2,3,3,1,2,5,3,2,4,7,3,0,1,1,1,1,2,2,11,4],"k":[1,1,0,0,0,0,0,2,1,3,6,0,0,0,0,1,0,0,0,0,0]},{"c":"MY002562","n":"HAFIZLAR OTOMOTİV","s":"NIGDE","pk":"B02","pl":"ALİ KOBUZ","d":[0,1,1,2,1,1,1,0,1,3,4,2,0,0,2,1,1,1,0,1,0],"kn":1,"t":[1,1,1,2,1,1,1,1,1,3,4,2,0,0,2,1,1,1,0,1,0],"k":[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003132","n":"KENAN USLU","s":"HATAY","pk":"B02","pl":"ALİ KOBUZ","d":[1,0,1,2,1,1,2,1,1,3,3,2,0,0,1,1,0,1,0,0,0],"kn":1,"t":[1,1,1,2,1,1,2,2,1,3,4,2,0,0,1,1,0,1,0,0,0],"k":[0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0]},{"c":"MY001456","n":"LEVENT KİRMİT","s":"HATAY","pk":"B02","pl":"ALİ KOBUZ","d":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"kn":1,"t":[0,1,0,1,0,0,0,0,0,0,1,1,0,0,1,0,1,0,0,0,0],"k":[0,1,0,1,0,0,0,0,0,0,1,1,0,0,1,0,1,0,0,0,0]},{"c":"MY003199","n":"Mert Çağlar Türk","s":"BOLU","pk":"B02","pl":"ALİ KOBUZ","d":[1,1,1,1,1,1,1,0,0,1,2,2,0,0,1,1,1,1,0,0,0],"kn":1,"t":[1,1,1,1,1,1,1,3,1,1,3,2,0,0,1,1,1,1,0,0,0],"k":[0,0,0,0,0,0,0,3,1,0,1,0,0,0,0,0,0,0,0,0,0]},{"c":"MY001566","n":"MURAT ÇETİNKAYA","s":"MERSIN","pk":"B02","pl":"ALİ KOBUZ","d":[2,1,1,2,3,1,2,1,1,5,8,3,0,0,2,1,1,2,1,1,1],"kn":1,"t":[2,1,1,2,3,1,2,2,1,5,9,3,0,0,2,1,1,2,1,1,1],"k":[0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003088","n":"NAR GRUP","s":"ANKARA","pk":"B02","pl":"ALİ KOBUZ","d":[1,1,0,1,1,0,0,0,1,0,0,2,0,0,1,0,1,0,0,0,1],"kn":1,"t":[1,1,1,1,1,1,0,3,1,2,10,2,0,0,1,0,1,1,0,0,1],"k":[0,0,1,0,0,1,0,3,0,2,10,0,0,0,0,0,0,1,0,0,0]},{"c":"MY003060","n":"ORONTES MOTORLU","s":"ANKARA","pk":"B02","pl":"ALİ KOBUZ","d":[0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0],"kn":1,"t":[0,1,0,1,1,1,1,1,1,1,2,1,0,0,1,1,0,0,0,1,0],"k":[0,1,0,1,1,1,0,1,1,1,2,1,0,0,1,1,0,0,0,0,0]},{"c":"MY002864","n":"OSMAN KESİK","s":"HATAY","pk":"B02","pl":"ALİ KOBUZ","d":[1,1,0,1,0,1,0,1,0,0,1,1,0,0,0,0,0,0,0,0,1],"kn":1,"t":[1,1,0,1,0,1,0,1,0,1,1,1,0,0,0,0,0,0,0,0,1],"k":[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY001207","n":"ŞÜKRÜYE YAMAN","s":"HATAY","pk":"B02","pl":"ALİ KOBUZ","d":[0,0,0,0,0,0,0,0,0,0,0,2,0,0,1,1,0,0,1,0,0],"kn":1,"t":[0,0,0,0,0,0,0,0,0,0,0,2,0,0,1,1,0,0,1,0,0],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000806","n":"USLU MOTOR","s":"HATAY","pk":"B02","pl":"ALİ KOBUZ","d":[1,0,1,1,1,2,2,1,0,1,0,0,0,0,1,0,1,0,0,2,0],"kn":1,"t":[1,1,1,1,1,2,2,1,1,2,2,1,0,0,1,1,1,1,0,2,0],"k":[0,1,0,0,0,0,0,0,1,1,2,1,0,0,0,1,0,1,0,0,0]},{"c":"MY001862","n":"YILMAZ KILIÇ","s":"AKSARAY","pk":"B02","pl":"ALİ KOBUZ","d":[1,1,1,1,1,1,1,1,1,0,1,2,0,0,1,1,1,1,0,0,0],"kn":1,"t":[1,1,1,1,1,1,1,1,1,1,3,2,0,0,1,1,1,1,0,0,0],"k":[0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002367","n":"ABDULLAH MOTOSİKLET","s":"ANTALYA","pk":"B03","pl":"FURKAN KANLİ","d":[1,1,1,1,0,1,1,1,1,1,2,3,0,0,0,1,1,1,0,1,0],"kn":1,"t":[1,1,1,1,0,1,1,1,1,2,3,3,0,0,1,1,1,1,0,1,0],"k":[0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,0,0,0,0,0,0]},{"c":"MY002825","n":"ADEM AĞCA","s":"ANTALYA","pk":"B03","pl":"FURKAN KANLİ","d":[1,1,1,2,0,0,2,0,0,0,0,1,0,0,1,0,1,0,0,1,0],"kn":1,"t":[1,1,1,2,1,1,2,2,1,2,7,1,0,0,1,1,1,0,0,1,0],"k":[0,0,0,0,1,1,0,2,1,2,7,0,0,0,0,1,0,0,0,0,0]},{"c":"MY001122","n":"CAN DAY.TÜK.","s":"KONYA","pk":"B03","pl":"FURKAN KANLİ","d":[1,1,1,0,0,1,1,1,0,1,1,3,0,0,1,0,2,0,0,1,1],"kn":1,"t":[1,1,1,0,0,1,1,1,0,1,2,4,0,0,1,0,2,0,0,1,1],"k":[0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0]},{"c":"MY002924","n":"ÇÖZEL OTOMOTIV","s":"MANISA","pk":"B03","pl":"FURKAN KANLİ","d":[1,1,1,1,1,1,1,0,0,1,2,1,0,0,1,0,1,1,0,0,0],"kn":1,"t":[1,1,1,1,1,1,1,1,1,1,2,1,0,0,1,1,1,1,0,0,0],"k":[0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0]},{"c":"MY001143","n":"DEMİRLER MOTOR","s":"AYDIN","pk":"B03","pl":"FURKAN KANLİ","d":[1,2,1,1,1,1,1,1,1,2,2,21,0,1,2,2,0,1,5,1,0],"kn":1,"t":[1,2,1,1,1,1,1,1,1,2,2,21,0,1,2,2,0,1,5,1,0],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002268","n":"DOLMAN OTO","s":"MANISA","pk":"B03","pl":"FURKAN KANLİ","d":[1,2,1,1,1,1,1,0,0,1,0,1,0,1,2,1,1,1,0,0,1],"kn":1,"t":[1,2,1,1,1,1,1,1,0,1,1,1,0,1,2,1,1,1,0,0,1],"k":[0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003238","n":"FIRAT AKYÜREK - İnci Motor","s":"IZMIR","pk":"B03","pl":"FURKAN KANLİ","d":[1,0,0,1,0,1,0,1,0,1,0,1,0,0,1,2,0,1,0,0,0],"kn":1,"t":[1,1,1,1,1,1,0,2,0,1,11,1,0,0,1,2,0,1,0,0,0],"k":[0,1,1,0,1,0,0,1,0,0,11,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000528","n":"GÜZEL İŞ MOTOR","s":"KONYA","pk":"B03","pl":"FURKAN KANLİ","d":[1,1,1,1,1,1,1,0,1,0,0,0,0,0,0,1,1,1,0,1,0],"kn":1,"t":[1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,0,1,0],"k":[0,0,0,0,0,0,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0]},{"c":"MY002532","n":"İSMAİL TAŞKIN","s":"AFYON","pk":"B03","pl":"FURKAN KANLİ","d":[1,0,1,1,1,1,1,1,1,1,1,3,0,0,1,0,1,1,0,1,1],"kn":1,"t":[1,1,1,1,1,1,1,1,1,1,2,3,0,0,1,1,1,1,0,1,1],"k":[0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0]},{"c":"MY003010","n":"LENA OTOMOTİV","s":"AYDIN","pk":"B03","pl":"FURKAN KANLİ","d":[0,0,1,3,2,0,2,0,1,0,2,4,0,0,0,1,1,1,0,0,0],"kn":1,"t":[1,1,1,3,2,1,2,3,1,1,3,4,0,0,1,1,1,1,0,0,0],"k":[1,1,0,0,0,1,0,3,0,1,1,0,0,0,1,0,0,0,0,0,0]},{"c":"MY003263","n":"MOTO MOTTO","s":"IZMIR","pk":"B03","pl":"FURKAN KANLİ","d":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"kn":1,"t":[1,1,1,1,1,0,1,2,1,2,5,1,0,0,1,1,1,1,0,0,0],"k":[1,1,1,1,1,0,1,2,1,2,5,1,0,0,1,1,1,1,0,0,0]},{"c":"MY002955","n":"MOTOFORS MOTOSİKLET","s":"KONYA","pk":"B03","pl":"FURKAN KANLİ","d":[1,2,1,1,1,1,3,0,1,0,1,2,0,0,0,0,0,0,0,0,0],"kn":1,"t":[1,2,1,1,1,1,3,1,1,1,2,2,0,0,0,0,0,0,0,0,0],"k":[0,0,0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0]},{"c":"MY001350","n":"RAMAZAN KARAKOYUN","s":"IZMIR","pk":"B03","pl":"FURKAN KANLİ","d":[5,0,3,0,0,1,0,0,0,7,0,9,0,0,2,0,14,0,0,0,0],"kn":1,"t":[5,0,3,0,0,1,0,0,0,7,0,9,0,0,2,0,14,0,0,0,0],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003012","n":"SARP TEDARİK TİC. A.Ş.","s":"IZMIR","pk":"B03","pl":"FURKAN KANLİ","d":[1,0,0,0,1,0,2,0,0,0,2,3,0,0,1,1,1,1,0,0,3],"kn":1,"t":[2,3,1,2,1,0,2,4,2,2,11,3,0,0,1,1,1,1,0,0,3],"k":[1,3,1,2,0,0,0,4,2,2,9,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000715","n":"SERKAN ESEN","s":"IZMIR","pk":"B03","pl":"FURKAN KANLİ","d":[0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0],"kn":1,"t":[0,1,0,1,1,0,1,1,1,1,1,3,0,0,0,1,1,0,0,0,0],"k":[0,1,0,1,1,0,0,1,1,1,0,3,0,0,0,0,0,0,0,0,0]},{"c":"MY002570","n":"SÖKE EKİN","s":"AYDIN","pk":"B03","pl":"FURKAN KANLİ","d":[0,1,1,1,1,0,1,0,0,1,3,1,0,0,0,0,1,0,2,0,1],"kn":1,"t":[0,1,1,1,1,0,1,0,0,1,3,1,0,0,0,0,1,0,2,0,1],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000773","n":"TAYFUN MOTOR","s":"ANTALYA","pk":"B03","pl":"FURKAN KANLİ","d":[0,0,0,1,1,0,1,1,0,0,1,5,0,0,0,0,0,0,0,0,0],"kn":1,"t":[1,1,1,2,1,2,1,3,1,2,5,6,0,0,3,2,1,1,0,0,0],"k":[1,1,1,1,0,2,0,2,1,2,4,1,0,0,3,2,1,1,0,0,0]},{"c":"MY002970","n":"TREND MOTORS","s":"MANISA","pk":"B03","pl":"FURKAN KANLİ","d":[0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,2],"kn":1,"t":[0,0,0,1,0,0,0,0,0,1,2,1,0,0,0,0,0,0,0,0,2],"k":[0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0]},{"c":"MY001531","n":"YASİN AĞGEDİK","s":"ANTALYA","pk":"B03","pl":"FURKAN KANLİ","d":[0,0,1,0,0,1,0,0,0,0,0,4,0,1,2,1,0,0,0,0,0],"kn":1,"t":[1,2,1,3,0,1,1,3,1,1,3,4,0,1,2,1,0,0,0,0,0],"k":[1,2,0,3,0,0,1,3,1,1,3,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000854","n":"YİĞİTLER DAY.TÜK.","s":"DENIZLI","pk":"B03","pl":"FURKAN KANLİ","d":[0,0,2,1,1,0,3,1,0,5,8,2,0,0,1,1,2,0,2,1,1],"kn":1,"t":[1,2,2,2,1,1,3,7,1,10,8,6,0,0,1,1,2,1,2,1,1],"k":[1,2,0,1,0,1,0,6,1,5,0,4,0,0,0,0,0,1,0,0,0]},{"c":"MY002847","n":"AHMET SAĞGÜN","s":"KILIS","pk":"B04","pl":"AYSUN SAHİN","d":[1,1,1,1,1,1,1,1,1,4,4,2,0,0,1,2,1,1,1,1,1],"kn":1,"t":[1,1,1,1,1,1,1,1,1,4,4,2,0,0,1,2,1,1,1,1,1],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000037","n":"CROSS MOTOR","s":"SIVAS","pk":"B04","pl":"AYSUN SAHİN","d":[1,1,1,1,1,0,1,1,1,1,0,0,0,0,1,0,0,0,0,1,1],"kn":1,"t":[1,1,1,1,1,0,1,1,1,1,0,0,0,0,1,0,0,0,0,1,1],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002227","n":"ELMOBİS","s":"ELAZIG","pk":"B04","pl":"AYSUN SAHİN","d":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0],"kn":1,"t":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002702","n":"HAN OTOMOTİV","s":"BARTIN","pk":"B04","pl":"AYSUN SAHİN","d":[7,19,4,7,2,10,4,10,2,20,18,24,0,1,14,7,1,5,8,2,2],"kn":1,"t":[7,19,4,7,2,10,4,10,2,20,18,24,0,1,14,7,1,5,8,2,2],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003249","n":"MİDYAT ŞAN YAPI","s":"MARDIN","pk":"B04","pl":"AYSUN SAHİN","d":[1,1,0,2,0,1,1,2,1,1,2,0,0,0,0,0,0,0,0,0,0],"kn":1,"t":[1,1,1,2,0,1,1,2,1,2,3,0,0,0,0,0,0,0,0,0,0],"k":[0,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000537","n":"ŞAFAK OTOMOTİV","s":"ADIYAMAN","pk":"B04","pl":"AYSUN SAHİN","d":[1,1,1,2,1,1,1,1,1,1,1,1,0,0,2,1,1,1,0,0,0],"kn":1,"t":[1,1,1,2,1,1,1,1,1,1,3,1,0,0,2,1,1,1,0,0,0],"k":[0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003086","n":"TREND BİSİKLET","s":"ERZINCAN","pk":"B04","pl":"AYSUN SAHİN","d":[0,0,0,0,0,1,0,1,0,3,2,2,0,0,1,0,0,0,0,1,1],"kn":1,"t":[0,0,0,0,0,1,0,1,0,3,2,2,0,0,1,0,0,0,0,1,1],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003138","n":"YUNUS BUTUR","s":"SIIRT","pk":"B04","pl":"AYSUN SAHİN","d":[0,0,0,1,0,1,0,1,1,1,1,0,0,0,1,0,0,0,0,0,1],"kn":1,"t":[0,1,0,2,0,1,0,1,1,1,2,1,0,0,1,0,0,0,0,0,1],"k":[0,1,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0]},{"c":"MY003268","n":"AÇIKEL YAPI","s":"KOCAELI","pk":"B05","pl":"ANİL AYKİN","d":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"kn":1,"t":[1,2,1,1,1,1,1,3,2,2,4,0,0,0,0,0,0,0,0,0,0],"k":[1,2,1,1,1,1,1,3,2,2,4,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002834","n":"ARASLAR","s":"TRABZON","pk":"B05","pl":"ANİL AYKİN","d":[1,4,1,3,0,1,3,0,1,2,0,9,0,0,0,1,0,1,0,0,1],"kn":1,"t":[1,4,1,3,1,1,3,2,1,3,7,9,0,0,0,1,0,1,0,0,1],"k":[0,0,0,0,1,0,0,2,0,1,7,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000030","n":"AS MOTOSİKLET","s":"CORUM","pk":"B05","pl":"ANİL AYKİN","d":[1,1,1,0,1,1,1,1,0,1,2,0,0,0,0,1,0,1,0,1,0],"kn":1,"t":[1,1,1,1,1,1,1,1,1,1,2,0,0,0,0,1,0,1,0,1,0],"k":[0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002462","n":"BİROLLAR MAKİNA","s":"EDIRNE","pk":"B05","pl":"ANİL AYKİN","d":[0,1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,0],"kn":1,"t":[0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,0],"k":[0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003103","n":"ÇALIŞKAN GRUP","s":"BURSA","pk":"B05","pl":"ANİL AYKİN","d":[2,1,1,1,1,1,1,1,0,2,5,3,0,0,1,1,1,1,0,2,1],"kn":1,"t":[2,3,1,2,1,1,1,5,2,5,10,3,0,0,1,1,1,1,0,2,1],"k":[0,2,0,1,0,0,0,4,2,3,5,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003096","n":"ÇOLAKLAR OTO EKSPERTİZ","s":"BURSA","pk":"B05","pl":"ANİL AYKİN","d":[0,1,0,0,0,0,0,0,0,0,3,3,0,0,1,1,1,1,4,1,1],"kn":1,"t":[0,1,0,0,0,0,0,0,0,0,3,3,0,0,1,1,1,1,4,1,1],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003135","n":"ÇORUM E MOTORS","s":"CORUM","pk":"B05","pl":"ANİL AYKİN","d":[0,0,0,0,0,0,0,0,0,1,0,2,0,0,2,0,1,0,4,3,2],"kn":1,"t":[0,0,0,0,0,0,0,0,0,1,0,2,0,0,2,0,1,0,4,3,2],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000917","n":"DENGE AVM","s":"ESKISEHIR","pk":"B05","pl":"ANİL AYKİN","d":[3,2,1,0,1,0,3,0,1,1,2,5,0,1,2,3,2,1,5,3,3],"kn":1,"t":[3,2,1,0,1,0,3,0,1,1,2,5,0,1,2,3,2,1,5,3,3],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002705","n":"ELİTTE MOTOR","s":"BALIKESIR","pk":"B05","pl":"ANİL AYKİN","d":[1,0,0,0,1,1,0,0,0,0,0,1,0,0,0,0,1,1,0,0,0],"kn":1,"t":[1,1,1,2,1,1,0,3,1,1,4,2,0,0,0,0,1,1,0,0,0],"k":[0,1,1,2,0,0,0,3,1,1,4,1,0,0,0,0,0,0,0,0,0]},{"c":"MY000210","n":"ENVER ANKARA","s":"KUTAHYA","pk":"B05","pl":"ANİL AYKİN","d":[0,1,0,1,1,1,1,1,1,3,2,0,0,0,1,1,1,1,1,1,1],"kn":1,"t":[1,1,1,1,1,1,1,2,1,3,2,1,0,0,1,1,1,1,1,1,1],"k":[1,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0]},{"c":"MY002539","n":"Güngör motor","s":"DUZCE","pk":"B05","pl":"ANİL AYKİN","d":[0,0,0,3,1,1,0,0,1,0,1,2,0,0,1,2,0,0,0,0,0],"kn":1,"t":[0,0,0,3,1,1,0,0,1,0,2,3,0,0,1,2,0,0,0,0,0],"k":[0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0]},{"c":"MY003258","n":"KARADENİZ PERFORMANS","s":"SAMSUN","pk":"B05","pl":"ANİL AYKİN","d":[0,1,1,1,1,1,1,1,1,0,2,2,0,0,1,1,1,0,0,0,0],"kn":1,"t":[1,2,1,1,1,1,1,3,1,1,7,2,0,0,1,1,1,1,0,0,0],"k":[1,1,0,0,0,0,0,2,0,1,5,0,0,0,0,0,0,1,0,0,0]},{"c":"MY003259","n":"KOÇAK MOBİLİTE","s":"SAMSUN","pk":"B05","pl":"ANİL AYKİN","d":[1,3,1,1,1,1,1,0,0,2,1,2,0,0,1,1,1,1,0,0,0],"kn":1,"t":[1,3,1,1,1,1,1,5,1,3,16,2,0,0,1,1,1,1,0,0,0],"k":[0,0,0,0,0,0,0,5,1,1,15,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003121","n":"MARMARA MOTOSİKLET","s":"YALOVA","pk":"B05","pl":"ANİL AYKİN","d":[1,0,0,1,0,0,0,1,0,0,3,0,0,0,0,0,0,0,0,0,0],"kn":1,"t":[1,1,1,1,1,1,0,1,1,2,3,1,0,0,1,1,0,1,0,0,0],"k":[0,1,1,0,1,1,0,0,1,2,0,1,0,0,1,1,0,1,0,0,0]},{"c":"MY000079","n":"MOTOCROSS","s":"BURSA","pk":"B05","pl":"ANİL AYKİN","d":[1,1,1,2,0,1,1,0,0,0,0,5,0,0,3,2,0,0,0,1,2],"kn":1,"t":[1,1,1,2,1,1,1,1,1,1,5,5,0,0,3,2,0,0,0,1,2],"k":[0,0,0,0,1,0,0,1,1,1,5,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003165","n":"MOTOHAS 43","s":"KUTAHYA","pk":"B05","pl":"ANİL AYKİN","d":[2,0,0,0,0,1,0,0,0,1,0,1,0,0,1,0,1,0,0,0,0],"kn":1,"t":[2,0,0,0,0,1,0,0,1,1,0,1,0,0,1,0,1,0,0,0,0],"k":[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000002","n":"ONURSEL TİC.","s":"BURSA","pk":"B05","pl":"ANİL AYKİN","d":[0,0,1,1,0,1,0,1,0,2,2,2,0,0,4,1,0,1,0,0,0],"kn":1,"t":[0,0,1,1,0,1,0,1,1,2,2,2,0,0,4,1,0,1,0,0,0],"k":[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY001543","n":"POLAT GEMİ","s":"TEKIRDAG","pk":"B05","pl":"ANİL AYKİN","d":[1,1,1,1,2,1,1,1,1,1,0,2,0,1,2,1,1,1,0,0,0],"kn":1,"t":[1,1,1,1,2,1,1,2,1,1,3,2,0,1,2,1,1,1,0,0,0],"k":[0,0,0,0,0,0,0,1,0,0,3,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002851","n":"REDLİNE MOTORS","s":"BALIKESIR","pk":"B05","pl":"ANİL AYKİN","d":[1,0,1,0,0,1,0,0,0,0,2,1,0,0,0,1,1,1,1,0,0],"kn":1,"t":[1,1,1,1,0,1,0,1,1,0,3,3,0,0,1,1,1,1,1,0,0],"k":[0,1,0,1,0,0,0,1,1,0,1,2,0,0,1,0,0,0,0,0,0]},{"c":"MY003064","n":"SERCAN GÜNER","s":"ZONGULDAK","pk":"B05","pl":"ANİL AYKİN","d":[1,1,0,1,0,1,1,1,0,0,2,2,0,0,1,0,0,1,0,0,0],"kn":1,"t":[1,1,0,1,0,1,1,1,0,1,2,2,0,0,1,0,0,1,0,0,0],"k":[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY002937","n":"TAHA EROL","s":"BALIKESIR","pk":"B05","pl":"ANİL AYKİN","d":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0],"kn":1,"t":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0],"k":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"c":"MY000019","n":"USTALAR MOT","s":"KOCAELI","pk":"B05","pl":"ANİL AYKİN","d":[1,2,1,2,0,2,1,2,1,6,1,2,0,0,2,2,1,1,1,0,0],"kn":1,"t":[1,2,1,2,1,2,1,4,1,6,6,2,0,0,2,2,1,1,1,0,0],"k":[0,0,0,0,1,0,0,2,0,0,5,0,0,0,0,0,0,0,0,0,0]},{"c":"MY003098","n":"YILMAZ TRAKTÖR","s":"SAKARYA","pk":"B05","pl":"ANİL AYKİN","d":[1,3,1,2,3,1,3,0,1,2,12,7,0,0,3,2,0,2,1,1,1],"kn":1,"t":[1,3,1,2,3,1,3,6,2,2,13,7,0,0,3,2,0,2,1,1,1],"k":[0,0,0,0,0,0,0,6,1,0,1,0,0,0,0,0,0,0,0,0,0]}],"stats":{"split":true,"dealers":83,"known":83,"depoChassis":1628,"depoReported":1628,"konsChassis":4,"konsReported":713,"konsComplete":false,"matrixDealers":83,"anomalies":0}};
+  /* Hiçbir ekranda ve Excel çıktısında gösterilmeyecek modeller. Yeni model eklemek için listeye adını yazın. */
+  var EXCLUDED = ['NEV 50', 'REHA 250', 'TRODON SX', 'TRODON SX 125', 'eTRODON'];
+  /* Pasif bayiler (cari kodu). Raporda ve Excel çıktısında gösterilmez. Listeye kod ekleyerek yeni pasif bayi tanımlanır. */
+  var PASSIVE = ['MY001350', 'MY002227', 'MY003086', 'MY003096', 'MY003135', 'MY000071'];
+  var passiveSeen = [];
+  var core = window.ReportCore;
+  var ds = null;
+  var S = { brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false };
+  var $ = function (id) { return document.getElementById(id); };
+  var norm = core.norm;
+  var fmt = function (n) { return Number(n).toLocaleString('tr-TR'); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var dbDoc = null, userCap = null, dlCap = null, pending = null;
+
+  /* ---------- hesaplama ---------- */
+  function known(d) { return !!d.t; }
+  function splitMode() { return S.split && !!ds.stats.split; }
+  function total(d, i) { return d.t ? d.t[i] : (d.d ? d.d[i] : 0); }
+  /* both/depo/kons: bayi depo ve konsinye ayrımı biliniyor. have: yalnız toplam adet biliniyor.
+     miss: bayi depoda da konsinyede de yok. depoq/unk: konsinye bilgisi yok. */
+  function status(d, i) {
+    if (d.t) {
+      if (d.t[i] <= 0) return 'miss';
+      if (!d.d || !d.k) return 'have';
+      return d.d[i] > 0 && d.k[i] > 0 ? 'both' : d.d[i] > 0 ? 'depo' : 'kons';
+    }
+    return d.d && d.d[i] > 0 ? 'depoq' : 'unk';
+  }
+  function visModels() {
+    var out = [];
+    ds.models.forEach(function (m, i) {
+      if (m.z) return;
+      if (S.brand !== 'ALL' && m.b !== S.brand) return;
+      if (EXCLUDED.some(function (x) { return norm(x) === norm(m.n); })) return;
+      out.push(i);
+    });
+    return out;
+  }
+  function visDealers(mods, ignoreQ) {
+    var q = norm(S.q);
+    var list = ds.dealers.filter(function (d) {
+      if (S.pk !== 'ALL' && d.pk !== S.pk) return false;
+      if (!ignoreQ && q && norm(d.n + ' ' + d.s + ' ' + d.c).indexOf(q) < 0) return false;
+      return true;
+    });
+    return list.map(function (d) {
+      var miss = 0, unk = 0;
+      mods.forEach(function (i) { var s = status(d, i); if (s === 'miss') miss++; else if (s === 'unk') unk++; });
+      return { d: d, miss: miss, unk: unk };
+    });
+  }
+  function plasiyers() {
+    var m = {};
+    ds.dealers.forEach(function (d) { if (d.pk && !m[d.pk]) m[d.pk] = d.pl; });
+    return Object.keys(m).sort().map(function (k) { return { pk: k, pl: m[k] }; });
+  }
+
+  /* ---------- görünüm ---------- */
+  function renderKpis(mods, rows) {
+    var cells = 0, dealersMiss = 0, unkDealers = 0, tot = 0;
+    rows.forEach(function (r) { cells += r.miss; if (r.miss) dealersMiss++; if (!known(r.d)) unkDealers++; tot += mods.length; });
+    $('kpis').innerHTML =
+      '<div class="kpi"><div class="v">' + fmt(rows.length) + '</div><div class="l">Bayi</div></div>' +
+      '<div class="kpi hm"><div class="v">' + fmt(mods.length) + '</div><div class="l">Model</div></div>' +
+      '<div class="kpi"><div class="v miss">' + fmt(cells) + '</div><div class="l">Toplam eksik model sayısı</div></div>' +
+      '<div class="kpi"><div class="v miss">' + fmt(dealersMiss) + '</div><div class="l">Eksiği olan bayi</div></div>' +
+      (unkDealers ? '<div class="kpi"><div class="v">' + fmt(unkDealers) + '</div><div class="l">Stok bilgisi olmayan bayi</div></div>' : '');
+  }
+
+  function renderCoverage() {
+    var el = $('coverage'), h = '';
+    var unk = ds.dealers.filter(function (d) { return !known(d); });
+    if (unk.length) {
+      var pks = {};
+      unk.forEach(function (d) { pks[d.pk] = (pks[d.pk] || 0) + 1; });
+      var parts = Object.keys(pks).sort().map(function (k) { return k + ': ' + pks[k] + ' bayi'; }).join(', ');
+      h += '<details class="notice"><summary><b>' + fmt(unk.length) + ' bayi için model bazında stok bilgisi dosyada yok</b> (' + esc(parts) + ')</summary>' +
+        '<p style="margin:6px 0 0">Bu bayilerde bayi depoda olmayan model için "ikisinde de yok" denemez, gri taralı gösterilir. Bayi Stok sayfasının tüm satırlarla dışa aktarıldığı dosyayı yükleyin.</p></details>';
+    }
+    el.innerHTML = h;
+  }
+
+  function matrixHtml(mods, rows) {
+    if (!rows.length) return '<div class="panel empty">Bu filtreyle bayi bulunamadı.</div>';
+    var brands = [];
+    mods.forEach(function (i) {
+      var b = ds.models[i].b, last = brands[brands.length - 1];
+      if (last && last.b === b) last.n++; else brands.push({ b: b, n: 1 });
+    });
+    var h = '<div class="panel"><div class="mxwrap"><table class="mx"><thead><tr class="r1"><th class="corner dealer" rowspan="3">Bayi</th>';
+    brands.forEach(function (b) { h += '<th colspan="' + b.n + '">' + esc(b.b) + '</th>'; });
+    h += '</tr><tr class="r2">';
+    mods.forEach(function (i) {
+      var m = ds.models[i];
+      h += '<th class="mh"><span class="n">' + esc(m.n) + '</span></th>';
+    });
+    h += '</tr><tr class="r3">';
+    var colMiss = mods.map(function (i) { return rows.filter(function (r) { return status(r.d, i) === 'miss'; }).length; });
+    colMiss.forEach(function (n) { h += '<th>' + (n ? '<span style="color:var(--miss-solid)">' + n + ' eksik</span>' : '–') + '</th>'; });
+    h += '</tr></thead><tbody>';
+    var cur = null, n = mods.length + 1;
+    rows.forEach(function (r) {
+      if (r.d.pk !== cur) {
+        cur = r.d.pk;
+        var grp = rows.filter(function (x) { return x.d.pk === cur; });
+        var gm = grp.reduce(function (a, x) { return a + x.miss; }, 0);
+        h += '<tr class="grp"><td colspan="' + n + '"><span>' + esc(cur) + ' · ' + esc(r.d.pl) + ' · ' + grp.length + ' bayi · ' + gm + ' eksik</span></td></tr>';
+      }
+      h += '<tr><th class="dealer" scope="row"><div class="dn"><span>' + esc(r.d.n) + '</span>' + (r.miss ? '<span class="pill">' + r.miss + '</span>' : '') + '</div>' +
+        '<div class="dm">' + esc(r.d.s) + ' · ' + esc(r.d.c) + (known(r.d) ? '' : '<span class="tag">stok bilgisi yok</span>') + '</div></th>';
+      mods.forEach(function (i) {
+        var s = status(r.d, i), inner, cls = s;
+        if (s === 'miss') inner = 'YOK';
+        else if (s === 'unk') inner = '–';
+        else if (splitMode() && r.d.d && r.d.k) { inner = '<span class="sl">Depo</span><i>' + r.d.d[i] + '</i><span class="sl">Kons.</span><i>' + r.d.k[i] + '</i>'; }
+        else { inner = '<i>' + total(r.d, i) + '</i>'; cls = 'plain'; }
+        h += '<td class="c ' + cls + '"><div class="cell">' + inner + '</div></td>';
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table></div></div>';
+    return h;
+  }
+
+  function listByBayi(mods, rows) {
+    var sel = rows.filter(function (r) { return r.miss || r.unk; });
+    if (!sel.length) return '<div class="panel empty">Eksik model bulunmuyor.</div>';
+    var h = '<div class="list">', cur = null;
+    sel.forEach(function (r) {
+      if (r.d.pk !== cur) { cur = r.d.pk; h += '<div class="grouph">' + esc(cur) + ' · ' + esc(r.d.pl) + '</div>'; }
+      var missC = '', unkC = '';
+      mods.forEach(function (i) {
+        var s = status(r.d, i), m = ds.models[i];
+        var chip = '<span class="chip' + (s === 'unk' ? ' unk' : '') + '"><span class="br">' + esc(m.b === 'BAJAJ' ? 'Bajaj' : 'Kanuni') + '</span>' + esc(m.n) + '</span>';
+        if (s === 'miss') missC += chip; else if (s === 'unk') unkC += chip;
+      });
+      h += '<div class="card"><h3>' + esc(r.d.n) + '<small>' + esc(r.d.s) + ' · ' + esc(r.d.c) + '</small></h3>';
+      if (missC) h += '<div class="subl">Bayi depoda ve konsinyede yok (' + r.miss + ')</div><div class="chips" style="margin-top:4px">' + missC + '</div>';
+      if (unkC) h += '<div class="subl">Bayi depoda yok, toplam stok bilgisi dosyada yok (' + r.unk + ')</div><div class="chips" style="margin-top:4px">' + unkC + '</div>';
+      h += '</div>';
+    });
+    return h + '</div>';
+  }
+
+  function listByModel(mods, rows) {
+    var h = '<div class="list">', any = false;
+    mods.forEach(function (i) {
+      var m = ds.models[i], miss = [], unk = [];
+      rows.forEach(function (r) { var s = status(r.d, i); if (s === 'miss') miss.push(r); else if (s === 'unk') unk.push(r); });
+      if (!miss.length && !unk.length) return;
+      any = true;
+      var chip = function (r, c) { return '<span class="chip ' + c + '">' + esc(r.d.n) + ' <span class="br">' + esc(r.d.s) + '</span></span>'; };
+      h += '<div class="card"><h3>' + esc(m.n) + '<small>' + esc(m.b === 'BAJAJ' ? 'Bajaj' : 'Kanuni') + '' + '</small></h3>';
+      if (miss.length) h += '<div class="subl">Bayi depoda ve konsinyede yok (' + miss.length + ' bayi)</div><div class="chips" style="margin-top:4px">' + miss.map(function (r) { return chip(r, ''); }).join('') + '</div>';
+      if (unk.length) h += '<div class="subl">Bayi depoda yok, stok bilgisi yok (' + unk.length + ' bayi)</div><div class="chips" style="margin-top:4px">' + unk.map(function (r) { return chip(r, 'unk'); }).join('') + '</div>';
+      h += '</div>';
+    });
+    return any ? h + '</div>' : '<div class="panel empty">Eksik model bulunmuyor.</div>';
+  }
+
+  function renderFoot() {
+    var st = ds.stats, li = [];
+    li.push('Eksik, bayiye faturalı (bayi depo) stokta da konsinyede de bulunmayan modeldir. Her bayinin her modelden toplam adedi (bayi depo + konsinye) Bayi Stok sayfasından okunur.');
+    if (st.split) {
+      var ok = st.depoReported != null && st.depoReported === st.depoChassis;
+      li.push('Bayi depo adedi Şase Numaraları sayfasındaki BAYİ DEPO şase kayıtlarından sayılır: ' + fmt(st.depoChassis) + ' kayıt' +
+        (st.depoReported != null ? (ok ? ', Model sayfasındaki toplamla aynı.' : ', Model sayfasındaki toplam ' + fmt(st.depoReported) + ' (fark var).') : '.') +
+        ' Konsinye = toplam adet eksi bayi depo.');
+    } else li.push('Bu veride Şase Numaraları sayfası yok, bu yüzden bayi depo ve konsinye ayrı gösterilmiyor. Ayrımı görmek için Şase Numaraları sayfasını içeren dosyayı da yükleyin.');
+    var hid = ds.models.filter(function (m) { return m.z && !EXCLUDED.some(function (x) { return norm(x) === norm(m.n); }); }).map(function (m) { return m.n; });
+    if (hid.length) li.push('Hiçbir bayide stoğu olmayan model tablodan çıkarıldı: ' + esc(hid.join(', ')) + '.');
+    if (passiveSeen.length) li.push('Pasif ' + passiveSeen.length + ' bayi rapora dahil edilmedi: ' + esc(passiveSeen.map(function (x) { return x.n + ' (' + x.s + ')'; }).join(', ')) + '.');
+    if (st.anomalies) li.push(st.anomalies + ' hücrede toplam adet bayi depo adedinden küçük çıktı; konsinye 0 sayıldı.');
+    $('foot').innerHTML = '<h2>Veri notları</h2><ul>' + li.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>';
+  }
+
+  function render() {
+    if (!ds) return;
+    var mods = visModels(), rows = visDealers(mods);
+    var all = rows;
+    if (S.onlyMiss && S.view === 'matrix') rows = rows.filter(function (r) { return r.miss > 0; });
+    renderKpis(mods, all);
+    $('legend').hidden = S.view !== 'matrix';
+    var sp = !!ds.stats.split, anyUnk = ds.dealers.some(function (d) { return !known(d); });
+    var sm = splitMode();
+    $('lgBoth').hidden = !sm; $('lgDepo').hidden = !sm; $('lgKons').hidden = !sm; $('lgCell').hidden = true;
+    $('lgHave').hidden = sm; $('lgUnk').hidden = !anyUnk;
+    $('splitWrap').hidden = !sp || S.view !== 'matrix';
+    $('main').innerHTML = S.view === 'matrix' ? matrixHtml(mods, rows) : S.view === 'bayi' ? listByBayi(mods, all) : listByModel(mods, all);
+    $('onlyMiss').disabled = S.view !== 'matrix';
+  }
+
+  function setData(d, note) {
+    passiveSeen = d.dealers.filter(function (x) { return PASSIVE.indexOf(x.c) >= 0; });
+    ds = Object.assign({}, d, { dealers: d.dealers.filter(function (x) { return PASSIVE.indexOf(x.c) < 0; }) });
+    var dt = new Date(d.asOf);
+    $('asof').textContent = 'Kaynak: ' + (d.source || 'Excel') + ' · ' + (isNaN(dt) ? '' : dt.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })) + (note ? ' · ' + note : '');
+    var sel = $('selPk'), keep = S.pk;
+    sel.innerHTML = '<option value="ALL">Tüm plasiyerler</option>' + plasiyers().map(function (p) { return '<option value="' + esc(p.pk) + '">' + esc(p.pk + ' · ' + p.pl) + '</option>'; }).join('');
+    if (!plasiyers().some(function (p) { return p.pk === keep; })) { keep = 'ALL'; S.pk = 'ALL'; }
+    sel.value = keep;
+    renderCoverage(); renderFoot(); render();
+  }
+
+  function toast(t) { var e = $('toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { e.hidden = true; }, 3200); }
+
+  /* ---------- Excel dışa aktarma ---------- */
+  var FILL = { have: 'FFD4ECD9', both: 'FFD4ECD9', depo: 'FFDBE9F8', kons: 'FFFBE9C4', miss: 'FFFBDCD8', unk: 'FFE7E9EE', depoq: 'FFDBE9F8' };
+  var FONT = { have: 'FF1B5E2F', both: 'FF1B5E2F', depo: 'FF174A85', kons: 'FF7A4C00', miss: 'FFA3231A', unk: 'FF5D6674', depoq: 'FF174A85' };
+  function safeSheet(n, used) {
+    var b = n.replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 28).trim() || 'Sayfa', s = b, c = 2;
+    while (used[s.toLowerCase()]) s = b + ' ' + c++;
+    used[s.toLowerCase()] = 1; return s;
+  }
+  function colL(n) { var s = ''; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+
+  function buildWorkbook(pkSel) {
+    var mods = visModels();
+    var wb = new ExcelJS.Workbook();
+    wb.creator = 'Bayi Model Stok Raporu'; wb.created = new Date();
+    var used = {};
+    var pks = plasiyers().filter(function (p) { return pkSel === 'ALL' || p.pk === pkSel; });
+    var allRows = [];
+    var sumRows = [];
+    pks.forEach(function (p) {
+      var rows = ds.dealers.filter(function (d) { return d.pk === p.pk; }).map(function (d) {
+        var miss = 0, unk = 0; mods.forEach(function (i) { var s = status(d, i); if (s === 'miss') miss++; else if (s === 'unk') unk++; });
+        return { d: d, miss: miss, unk: unk };
+      });
+      allRows = allRows.concat(rows.map(function (r) { return { r: r, p: p }; }));
+      sumRows.push([p.pk, p.pl, rows.length, rows.filter(function (r) { return r.miss; }).length, rows.reduce(function (a, r) { return a + r.miss; }, 0), rows.filter(function (r) { return !known(r.d); }).length]);
+    });
+
+    if (pkSel === 'ALL') {
+      var ws0 = wb.addWorksheet(safeSheet('Özet', used));
+      ws0.addRow(['Plasiyer kodu', 'Plasiyer', 'Bayi sayısı', 'Eksiği olan bayi', 'Toplam eksik model sayısı', 'Stok bilgisi olmayan bayi']);
+      sumRows.forEach(function (r) { ws0.addRow(r); });
+      var tr = ws0.addRow(['Toplam', '', sumRows.reduce(function (a, r) { return a + r[2]; }, 0), sumRows.reduce(function (a, r) { return a + r[3]; }, 0), sumRows.reduce(function (a, r) { return a + r[4]; }, 0), sumRows.reduce(function (a, r) { return a + r[5]; }, 0)]);
+      tr.font = { bold: true };
+      ws0.getRow(1).font = { bold: true };
+      ws0.getRow(1).alignment = { wrapText: true, vertical: 'middle' };
+      [14, 22, 12, 16, 18, 22].forEach(function (w, i) { ws0.getColumn(i + 1).width = w; });
+      ws0.addRow([]);
+      ws0.addRow(['Kaynak: ' + (ds.source || 'Excel') + ', ' + new Date(ds.asOf).toLocaleDateString('tr-TR')]);
+      ws0.addRow(['Eksik = bayiye faturalı (bayi depo) stokta da konsinyede de bulunmayan model.']);
+      if (ds.dealers.some(function (d) { return !known(d); })) ws0.addRow(['Stok bilgisi olmayan bayilerde bu hesap yapılamaz; tabloda gri (–) gösterilir.']);
+    }
+
+    pks.forEach(function (p) {
+      var ws = wb.addWorksheet(safeSheet(p.pk + ' ' + p.pl, used));
+      var rows = allRows.filter(function (x) { return x.p.pk === p.pk; }).map(function (x) { return x.r; });
+      var base = 5, hr1 = 3, hr2 = 4;
+      ws.getCell('A1').value = p.pk + ' · ' + p.pl + ' · bayi model stok tablosu';
+      ws.getCell('A1').font = { bold: true, size: 13 };
+      ws.getCell('A2').value = (splitMode() ? 'Hücre: bayi depo ve konsinye adedi. ' : 'Hücre: bayide bulunan adet (bayi depo + konsinye). ') + 'YOK = bayi depoda da konsinyede de yok. "–" = stok bilgisi yok.';
+      ws.getCell('A2').font = { italic: true, color: { argb: 'FF5D6674' } };
+      var heads = ['Bayi kodu', 'Bayi', 'Şehir'];
+      ws.getRow(hr1).values = heads.map(function () { return ''; }).concat(mods.map(function (i) { return ds.models[i].b; })).concat(['']);
+      ws.getRow(hr2).values = heads.concat(mods.map(function (i) { return ds.models[i].n; })).concat(['Eksik model sayısı']);
+      [hr1, hr2].forEach(function (r) {
+        var row = ws.getRow(r); row.font = { bold: true }; row.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        row.eachCell(function (c) { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECEEF2' } }; c.border = { bottom: { style: 'thin', color: { argb: 'FFD9DCE3' } } }; });
+      });
+      ws.getRow(hr2).height = 32;
+      rows.forEach(function (r, idx) {
+        var row = ws.getRow(base + idx);
+        row.getCell(1).value = r.d.c; row.getCell(2).value = r.d.n; row.getCell(3).value = r.d.s;
+        mods.forEach(function (mi, j) {
+          var s = status(r.d, mi), sm = splitMode() && r.d.d && r.d.k, c = row.getCell(4 + j);
+          if (s === 'miss') c.value = 'YOK';
+          else if (s === 'unk') c.value = '–';
+          else if (sm) c.value = 'Depo ' + r.d.d[mi] + ' · Kons. ' + r.d.k[mi];
+          else c.value = total(r.d, mi);
+          if (s === 'miss' || s === 'unk' || sm) {
+            c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL[s] } };
+            c.font = { color: { argb: FONT[s] }, bold: s === 'miss' };
+          }
+          c.alignment = { horizontal: 'center' };
+        });
+        var tc = row.getCell(4 + mods.length); tc.value = known(r.d) ? r.miss : 'bilinmiyor'; tc.alignment = { horizontal: 'center' };
+        if (r.miss) tc.font = { bold: true, color: { argb: 'FFA3231A' } };
+      });
+      // marka grubu başlıklarını birleştir
+      var s0 = 0;
+      while (s0 < mods.length) {
+        var e0 = s0; while (e0 + 1 < mods.length && ds.models[mods[e0 + 1]].b === ds.models[mods[s0]].b) e0++;
+        if (e0 > s0) ws.mergeCells(hr1, 4 + s0, hr1, 4 + e0);
+        s0 = e0 + 1;
+      }
+      ws.getColumn(1).width = 11; ws.getColumn(2).width = 30; ws.getColumn(3).width = 14;
+      mods.forEach(function (_, j) { ws.getColumn(4 + j).width = splitMode() ? 17 : 12; });
+      ws.getColumn(4 + mods.length).width = 14;
+      ws.views = [{ state: 'frozen', xSplit: 3, ySplit: hr2 }];
+    });
+
+    var wl = wb.addWorksheet(safeSheet('Eksik Listesi', used));
+    wl.addRow(['Plasiyer kodu', 'Plasiyer', 'Bayi kodu', 'Bayi', 'Şehir', 'Marka', 'Model', 'Durum']);
+    allRows.forEach(function (x) {
+      mods.forEach(function (i) {
+        var s = status(x.r.d, i);
+        if (s !== 'miss' && s !== 'unk') return;
+        var m = ds.models[i];
+        wl.addRow([x.p.pk, x.p.pl, x.r.d.c, x.r.d.n, x.r.d.s, m.b === 'BAJAJ' ? 'Bajaj' : 'Kanuni', m.n, s === 'miss' ? 'Bayi depoda ve konsinyede yok' : 'Bayi depoda yok, stok bilgisi yok']);
+      });
+    });
+    wl.getRow(1).font = { bold: true };
+    wl.getRow(1).eachCell(function (c) { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECEEF2' } }; });
+    [12, 20, 12, 30, 14, 10, 20, 38].forEach(function (w, i) { wl.getColumn(i + 1).width = w; });
+    wl.autoFilter = { from: 'A1', to: 'H1' };
+    wl.views = [{ state: 'frozen', ySplit: 1 }];
+    return wb;
+  }
+
+  async function exportXlsx() {
+    var btn = $('btnExport');
+    btn.disabled = true;
+    try {
+      var pkSel = S.pk;
+      var wb = buildWorkbook(pkSel);
+      var buf = await wb.xlsx.writeBuffer();
+      var d = new Date(), pad = function (n) { return String(n).padStart(2, '0'); };
+      var name = 'bayi-model-eksik-' + (pkSel === 'ALL' ? 'tum-plasiyerler' : pkSel.toLowerCase()) + '-' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '.xlsx';
+      if (dlCap) await dlCap.save({ filename: name, data: buf });
+      else {
+        var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      }
+      toast('Excel hazır: ' + name);
+    } catch (e) {
+      if (!e || e.code !== 'declined') toast('Excel oluşturulamadı' + (e && e.message ? ': ' + e.message : ''));
+    } finally { btn.disabled = false; }
+  }
+
+  /* ---------- Excel ile güncelleme ---------- */
+  async function onFile(ev) {
+    var files = Array.prototype.slice.call(ev.target.files || []);
+    if (!files.length) return;
+    var msg = $('updMsg'); $('updActions').hidden = true; pending = null;
+    msg.innerHTML = 'Okunuyor…';
+    try {
+      var wbs = [];
+      for (var n = 0; n < files.length; n++) { var wb = new ExcelJS.Workbook(); await wb.xlsx.load(await files[n].arrayBuffer()); wbs.push(wb); }
+      var names = files.map(function (f) { return f.name; }).join(' + ');
+      var nd = core.parseWorkbooks(wbs, { source: names, asOf: new Date().toISOString() });
+      pending = nd;
+      setData(nd, 'bu görünümde');
+      var st = nd.stats;
+      msg.innerHTML = '<b>' + esc(names) + '</b> okundu: ' + fmt(st.dealers) + ' bayi' + (st.split ? ', ' + fmt(st.depoChassis) + ' bayi depo şase kaydı' : ', yalnız toplam adet (şase sayfası yok)') + '.';
+      if (dbDoc && userCap && userCap.canEdit && userCap.canEdit()) { $('updActions').hidden = false; msg.innerHTML += ' Rapor şimdilik yalnız sizin ekranınızda. Herkesin görmesi için kaydedin.'; }
+      else msg.innerHTML += ' Rapor şimdilik yalnız sizin ekranınızda' + (dbDoc ? '; kaydetme yetkisi yalnız düzenleyicilerde.' : '.');
+    } catch (e) {
+      msg.innerHTML = '<span style="color:var(--miss-fg)">' + esc(e && e.message ? e.message : 'Dosya okunamadı.') + '</span>';
+    }
+  }
+  async function shareData() {
+    if (!pending || !dbDoc) return;
+    var b = $('btnShare'); b.disabled = true;
+    try {
+      await dbDoc.set({ ds: JSON.stringify(pending), asOf: pending.asOf, source: pending.source });
+      toast('Kaydedildi. Linki açan herkes bu veriyi görür.');
+      $('updActions').hidden = true;
+    } catch (e) { toast('Kaydedilemedi' + (e && e.message ? ': ' + e.message : '')); }
+    b.disabled = false;
+  }
+
+  /* ---------- olaylar ---------- */
+  function seg(id, key) {
+    $(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      S[key] = b.dataset.v;
+      Array.prototype.forEach.call($(id).children, function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      render();
+    });
+  }
+  seg('brandSeg', 'brand'); seg('viewSeg', 'view');
+  $('selPk').addEventListener('change', function (e) { S.pk = e.target.value; render(); });
+  var qt; $('q').addEventListener('input', function (e) { clearTimeout(qt); qt = setTimeout(function () { S.q = e.target.value; render(); }, 120); });
+  $('onlyMiss').addEventListener('change', function (e) { S.onlyMiss = e.target.checked; render(); });
+  $('splitChk').addEventListener('change', function (e) { S.split = e.target.checked; render(); });
+  $('btnUpdate').addEventListener('click', function () { var p = $('updatePanel'); p.hidden = !p.hidden; });
+  $('btnExport').addEventListener('click', exportXlsx);
+  $('file').addEventListener('change', onFile);
+  $('btnShare').addEventListener('click', shareData);
+
+  /* ---------- başlangıç ---------- */
+  setData(EMBEDDED);
+  if (window.claude && window.claude.use) {
+    Promise.all([window.claude.use('downloads'), window.claude.use('user'), window.claude.use('db')]).then(function (r) {
+      dlCap = r[0]; userCap = r[1];
+      var db = r[2];
+      if (db) {
+        dbDoc = db.doc('report/current');
+        var timer = setTimeout(function () {}, 10000);
+        dbDoc.onSnapshot(function (snap) {
+          clearTimeout(timer);
+          if (snap.metadata && snap.metadata.hasPendingWrites) return;
+          var x = snap.exists ? snap.data() : null;
+          if (!x || !x.ds) return;
+          try {
+            var nd = JSON.parse(x.ds);
+            if (nd && nd.models && nd.dealers && new Date(nd.asOf) > new Date(EMBEDDED.asOf) && (!ds || nd.asOf !== ds.asOf)) setData(nd);
+          } catch (e) { /* bozuk kayıt: gömülü veri kalır */ }
+        }, function () {});
+      }
+    }).catch(function () {});
+  }
+})();
+</script>
+
+</body>
+</html>
