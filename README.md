@@ -1,6 +1,6 @@
 # Bayi Model Stok Raporu
 
-Bajaj ve Kanuni için bayi bazında hangi modelin hem bayi depoda hem konsinyede olmadığını gösterir.
+Bajaj ve Kanuni için bayi bazında hangi modelin hem bayiye faturalı hem konsinye olarak olmadığını gösterir.
 
 | Link | Dosya | Amaç |
 |---|---|---|
