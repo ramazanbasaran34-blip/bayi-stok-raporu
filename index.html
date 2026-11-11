@@ -508,6 +508,42 @@ table.mx { width: 100%; min-width: 0; }
   .pgbrk { break-before: page; margin-top: 0 !important; }
   .rt thead th, .rt td.g1, .rt td.g2, .rt td.g3, .kbox { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ---- Satır renkleri: her satır sırayla iki farklı tonda (şeritli), tüm ekran ve çıktılarda ---- */
+:root { --zebra: #e2eaf5; --zebra-g1: #dde8f5; --zebra-g2: #d4ebe8; --zebra-g3: #f9e6cf; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --zebra: #232d3d; --zebra-g1: #25324a; --zebra-g2: #1f3a3a; --zebra-g3: #3b2f22; } }
+:root[data-theme="dark"] { --zebra: #232d3d; --zebra-g1: #25324a; --zebra-g2: #1f3a3a; --zebra-g3: #3b2f22; }
+.sdb { background: var(--surface); border-radius: 0 0 10px 10px; }
+.sd[open] > summary { border-radius: 10px 10px 0 0; }
+details.sd:nth-of-type(even) > summary { background: var(--zebra); border-radius: 10px; }
+details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
+.sdb .sg { padding-left: 6px; padding-right: 6px; margin: 0 -6px; }
+.sdb .sg:nth-child(odd):not(.sh):not(.tot) { background: var(--zebra); }
+.rt tbody tr:nth-child(even) td:not(.g1):not(.g2):not(.g3) { background: var(--zebra); }
+.rt tbody tr:nth-child(even) td.g1 { background: var(--zebra-g1); }
+.rt tbody tr:nth-child(even) td.g2 { background: var(--zebra-g2); }
+.rt tbody tr:nth-child(even) td.g3 { background: var(--zebra-g3); }
+.rt tbody tr.grp td { background: color-mix(in srgb, var(--accent) 16%, var(--surface-2)) !important; }
+.mx tbody tr:nth-child(even) th.dealer, .mx tbody tr:nth-child(even) td.c.plain { background: var(--zebra); }
+.list.cl .card:nth-of-type(even) { background: var(--zebra); }
+/* Eksik modeller bölümü */
+.reks { display: flex; flex-direction: column; gap: 6px; }
+.reks .eb { border-radius: 8px; padding: 8px 12px; font-size: 14.5px; line-height: 1.55; border: 1px solid; }
+.reks .eb p { margin: 2px 0 0; }
+.reks .eb.ok { border-color: #1b7a3a; background: color-mix(in srgb, #1b8a3f 12%, var(--surface)); }
+.reks .eb.ok b { color: #1b6b34; }
+.reks .eb.miss { border-color: #c62f24; background: color-mix(in srgb, #c62f24 8%, var(--surface)); }
+.reks .eb.unk { border-color: var(--line); background: var(--surface-2); }
+.rt.kl { min-width: 640px; }
+@media print {
+  .sdb .sg { padding: 1px 4px !important; margin: 0 -4px !important; }
+  .reks .rh3 { margin-top: 2px !important; }
+  .rnote { font-size: 8px !important; }
+  #stTabs { display: none !important; }
+  .reks .eb { font-size: 8.5px !important; padding: 3px 6px !important; border-radius: 5px !important; line-height: 1.4 !important; }
+  .rt.kl { min-width: 0 !important; }
+  .reks .eb, .sd > summary, .sdb .sg, .card, .rt td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 @media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s; } }
 </style>
 </head>
@@ -528,6 +564,7 @@ table.mx { width: 100%; min-width: 0; }
       <button type="button" role="tab" data-menu="stok" aria-selected="false">Bayi Stokları</button>
       <button type="button" role="tab" data-menu="durum" aria-selected="false">Durum Raporu</button>
       <button type="button" role="tab" data-menu="analiz" aria-selected="false">Bayi Stok Analiz</button>
+      <button type="button" role="tab" data-menu="karne" aria-selected="false">Bayi Karnesi</button>
       <button type="button" role="tab" data-menu="indir" aria-selected="false">İndir</button>
     </div>
   </div>
@@ -613,6 +650,20 @@ table.mx { width: 100%; min-width: 0; }
       </div>
     </div>
     <div id="analizBody"></div>
+  </div>
+
+  <div id="karnePane" class="pane" hidden>
+    <div class="filters">
+      <div class="field grow">
+        <label for="selKarne">Bayi seç</label>
+        <select id="selKarne"></select>
+      </div>
+      <div class="field grow" id="kSearchField">
+        <label for="kq">Bayi adı ile ara</label>
+        <input type="search" id="kq" placeholder="Örn. Kayalar, Hatay, MY001405" autocomplete="off">
+      </div>
+    </div>
+    <div id="karneBody"></div>
   </div>
 
   <div id="indirPane" hidden>
@@ -931,7 +982,7 @@ table.mx { width: 100%; min-width: 0; }
   var ds = null, raw = null;
   var STANDALONE = true;
   var STATIC = false;
-  var S = { menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' } } };
+  var S = { menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' } } };
   var $ = function (id) { return document.getElementById(id); };
   var norm = core.norm;
   var fmt = function (n) { return Number(n).toLocaleString('tr-TR'); };
@@ -1252,13 +1303,13 @@ table.mx { width: 100%; min-width: 0; }
 
   function render() {
     if (!ds) return;
-    var ind = S.menu === 'indir', dur = S.menu === 'durum', ana = S.menu === 'analiz', rp = curRep(), v = curView();
+    var ind = S.menu === 'indir', dur = S.menu === 'durum', ana = S.menu === 'analiz', kar = S.menu === 'karne', rp = curRep(), v = curView();
     Array.prototype.forEach.call($('nav').children, function (b) { b.setAttribute('aria-selected', b.dataset.menu === S.menu ? 'true' : 'false'); });
     Array.prototype.forEach.call($('repSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.v === S.dlRep ? 'true' : 'false'); });
-    document.querySelector('.wrap > .info').hidden = ana;
-    $('indirPane').hidden = !ind; $('durumPane').hidden = !dur; $('analizPane').hidden = !ana;
-    $('kpis').hidden = ind || ana; $('main').hidden = ind || dur || ana; $('coverage').hidden = ind || dur || ana;
-    $('repField').hidden = !ind; $('qField').hidden = ind || dur || ana; $('brandField').hidden = ana;
+    document.querySelector('.wrap > .info').hidden = ana || kar;
+    $('indirPane').hidden = !ind; $('durumPane').hidden = !dur; $('analizPane').hidden = !ana; $('karnePane').hidden = !kar;
+    $('kpis').hidden = ind || ana || kar; $('main').hidden = ind || dur || ana || kar; $('coverage').hidden = ind || dur || ana || kar;
+    $('repField').hidden = !ind; $('qField').hidden = ind || dur || ana || kar; $('brandField').hidden = ana || kar;
     $('viewField').hidden = rp !== 'eksik';
     $('legend').hidden = ind || v !== 'matrix';
     $('onlyWrap').hidden = v !== 'matrix';
@@ -1271,6 +1322,7 @@ table.mx { width: 100%; min-width: 0; }
     if (ind) { $('dlSummary').innerHTML = 'İndirilecek rapor: <b>' + esc(summaryText()) + '</b>'; return; }
     if (dur) { renderDurum(); return; }
     if (ana) { renderAnaliz(); return; }
+    if (kar) { renderKarne(); return; }
     var c = compose();
     $('kpis').innerHTML = c.kpis;
     $('main').innerHTML = (c.hidden > 0 ? '<div class="notice" role="status"><b>' + c.hidden + ' bayi daha aramanıza uyuyor</b> ama seçili plasiyer veya &ldquo;Yalnız eksiği olan bayiler&rdquo; filtresi nedeniyle gizli. <button class="btn" type="button" id="btnClearF" style="margin-top:8px">Filtreleri kaldır</button></div>' : '') + c.main;
@@ -1319,6 +1371,11 @@ table.mx { width: 100%; min-width: 0; }
           var cell = ws.getCell(r, c), al = cell.alignment || {};
           cell.alignment = Object.assign({}, al, { horizontal: 'center', vertical: 'middle' });
         }
+      }
+      var hl = hdr[hdr.length - 1];
+      for (var r = hl + 1; r <= last; r++) {
+        if ((r - hl) % 2 !== 0) continue;
+        for (var c = 1; c <= nc; c++) { var cz = ws.getCell(r, c); if (!cz.fill || !cz.fill.fgColor) cz.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE3EBF6' } }; }
       }
       hdr.forEach(function (r) {
         for (var c = 1; c <= nc; c++) {
@@ -1632,6 +1689,7 @@ table.mx { width: 100%; min-width: 0; }
   var JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
   var ATBL_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
   var XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  var ZEBRA = [226, 234, 245], ZODD = false;
   var NAVY = [18, 66, 122], HDR = [15, 47, 84], INK = [22, 32, 46], GREY = [75, 86, 103], LINEC = [217, 220, 227], SOFT = [236, 238, 242];
 
   function bname(b) { return b === 'BAJAJ' ? 'Bajaj' : 'Kanuni'; }
@@ -1765,8 +1823,8 @@ table.mx { width: 100%; min-width: 0; }
   }
 
   /* ----- Bayi Stok Analiz / Bayi Karnesi verisi ----- */
-  function aMatch(d) {
-    var tk = norm(S.aq).split(' ').filter(Boolean); if (!tk.length) return true;
+  function aMatch(d, q) {
+    var tk = norm(q === undefined ? S.aq : q).split(' ').filter(Boolean); if (!tk.length) return true;
     var hay = norm(d.n + ' ' + d.s + ' ' + d.c + ' ' + (d.pl || '') + ' ' + (d.pk || ''));
     return tk.every(function (x) { return hay.indexOf(x) >= 0; });
   }
@@ -1867,10 +1925,30 @@ table.mx { width: 100%; min-width: 0; }
     var m = BR.filter(function (b, bi) { return SRC(b) && !row.rec[bi]; }).map(function (b) { return b.n; });
     return m.length ? '<div class="rnote">Satış dosyasında bu bayi için ' + esc(m.join(' ve ')) + ' satış kaydı bulunmuyor (“–”).</div>' : '';
   }
+  /* Eksik model = bayiye faturalı ve konsinye stokta olmayan model */
+  function missGroups(d) {
+    var g = { miss: [], unk: [] };
+    allMods().forEach(function (i) { var st = status(d, i); if (st === 'miss') g.miss.push(i); else if (st === 'unk') g.unk.push(i); });
+    return g;
+  }
+  function missBrandTxt(arr) {
+    return BR.map(function (b) { return [b.n, arr.filter(function (i) { return ds.models[i].b === b.k; }).map(function (i) { return ds.models[i].n; }).join(', ')]; }).filter(function (x) { return x[1]; });
+  }
+  function missPlain(d) {
+    var g = missGroups(d);
+    return g.miss.length ? missBrandTxt(g.miss).map(function (x) { return x[0] + ': ' + x[1]; }).join(' | ') : 'Eksik model yoktur';
+  }
+  function eksikHtml(d) {
+    var g = missGroups(d), h = '<div class="reks"><h3 class="rh3">Eksik modeller</h3>';
+    if (!g.miss.length) h += '<div class="eb ok"><b>Eksik model yoktur.</b> Tüm modellerden bayide bayiye faturalı veya konsinye stok bulunuyor.</div>';
+    else h += '<div class="eb miss"><b>Bayiye faturalı ve konsinyede olmayan modeller (' + g.miss.length + '):</b>' + missBrandTxt(g.miss).map(function (x) { return '<p><b>' + esc(x[0]) + ':</b> ' + esc(x[1]) + '</p>'; }).join('') + '</div>';
+    if (g.unk.length) h += '<div class="eb unk"><b>Stok bilgisi dosyada olmayan modeller (' + g.unk.length + '):</b>' + missBrandTxt(g.unk).map(function (x) { return '<p><b>' + esc(x[0]) + ':</b> ' + esc(x[1]) + '</p>'; }).join('') + '</div>';
+    return h + '</div>';
+  }
   function analizDetailHtml(d) {
     var sp = !!ds.stats.split, ms = detailModels(d), ys = SY(), row = mkRow(d);
     var f = sum(ms.map(function (r) { return r.f; })), k = sum(ms.map(function (r) { return r.k; })), t = sum(ms.map(function (r) { return r.t; }));
-    var h = '<div class="rdet"><div class="rhead"><div class="rkick">Bayi Karnesi · Bayi Stok Analizi</div><h2>' + esc(d.n) + '</h2><div class="rsub">' + esc(d.s) + ' · ' + esc(d.c) + ' · ' + esc(d.pk) + ' · ' + esc(d.pl) + '</div></div>' + summaryHtml(summaryBoxes([row]));
+    var h = '<div class="rdet"><div class="rhead"><div class="rkick">Bayi Karnesi</div><h2>' + esc(d.n) + '</h2><div class="rsub">' + esc(d.s) + ' · ' + esc(d.c) + ' · ' + esc(d.pk) + ' · ' + esc(d.pl) + '</div></div>' + summaryHtml(summaryBoxes([row]));
     h += '<div class="rcols"><div><h3 class="rh3">Model detayları</h3>';
     if (!ms.length) h += '<div class="panel empty">Bu bayide stok yok.</div>';
     else {
@@ -1878,11 +1956,8 @@ table.mx { width: 100%; min-width: 0; }
       ms.forEach(function (r) { h += '<tr><td class="l">' + bname(ds.models[r.i].b) + '</td><td class="l"><b>' + esc(ds.models[r.i].n) + '</b></td>' + (sp ? '<td class="num">' + fmt(r.f) + '</td><td class="num">' + fmt(r.k) + '</td>' : '') + '<td class="num"><b>' + fmt(r.t) + '</b></td></tr>'; });
       h += '</tbody><tfoot><tr><td class="l" colspan="2">Genel toplam</td>' + (sp ? '<td class="num">' + fmt(f) + '</td><td class="num">' + fmt(k) + '</td>' : '') + '<td class="num">' + fmt(t) + '</td></tr></tfoot></table></div></div>';
     }
-    var mn = missingNames(d);
-    if (mn.length) h += '<div class="rnote"><b>Stokta olmayan modeller (' + mn.length + '):</b> ' + esc(mn.join(', ')) + '</div>';
-    h += '</div><div><h3 class="rh3">Aylık satış adedi (Bajaj ve Kanuni)</h3><div class="panel"><div class="rwrap">' + monthTable(row) + '</div></div></div></div>' + salesMissNote(row);
-    var a = salesAsOf();
-    if (a) h += '<div class="rnote">' + esc(ys[ys.length - 1]) + ' yılı tamamlanmadı: satışlar ' + esc(trDate(a)) + ' rapor tarihine kadardır.</div>';
+    var a = salesAsOf(), an = a ? '<div class="rnote">' + esc(ys[ys.length - 1]) + ' yılı tamamlanmadı: satışlar ' + esc(trDate(a)) + ' rapor tarihine kadardır.</div>' : '';
+    h += '</div><div><h3 class="rh3">Aylık satış adedi (Bajaj ve Kanuni)</h3><div class="panel"><div class="rwrap">' + monthTable(row) + '</div></div>' + salesMissNote(row) + an + eksikHtml(d) + '</div></div>';
     return h + '</div>';
   }
   function analizToolbar(d, n) {
@@ -1900,6 +1975,44 @@ table.mx { width: 100%; min-width: 0; }
     if (d) { $('analizBody').innerHTML = analizToolbar(d, 1) + salesNote() + analizDetailHtml(d); return; }
     var rows = analizRows();
     $('analizBody').innerHTML = analizToolbar(null, rows.length) + '<div class="rintro"><b>Bayi Karnesi</b> · Bayi Stok Analizi<br><span>' + fmt(rows.length) + ' bayi · Stok ve satış adedi: Bajaj ve Kanuni ayrı ayrı, toplam birlikte. Bayi adına dokunun: model detayı ve aylık satışlar açılır. Bayi adı aratıp çıktı alırsanız model detayları çıktıya otomatik eklenir.</span></div>' + salesNote() + summaryHtml(summaryBoxes(rows)) + analizListHtml(rows);
+  }
+
+  /* ----- Bayi Karnesi menüsü ----- */
+  function kRows() {
+    return ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && aMatch(d, S.kq); }).slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'tr'); }).map(mkRow);
+  }
+  function fillKarneSel() {
+    var sel = $('selKarne'), list = ds.dealers.filter(function (d) { return S.pk === 'ALL' || d.pk === S.pk; }).slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'tr'); });
+    if (S.kd !== 'ALL' && !list.some(function (d) { return d.c === S.kd; })) S.kd = 'ALL';
+    sel.innerHTML = '<option value="ALL">Tüm bayiler (' + list.length + ')</option>' + list.map(function (d) { return '<option value="' + esc(d.c) + '">' + esc(d.n + ' · ' + d.s) + '</option>'; }).join('');
+    sel.value = S.kd;
+  }
+  function karneToolbar(one, n) {
+    var b = function (a, lab, cls) { return '<button type="button" class="btn' + (cls ? ' ' + cls : '') + '" data-kexp="' + a + '">' + lab + '</button>'; };
+    var h = '<div class="tbar">';
+    if (one) h += '<button type="button" class="btn" data-kback="1">← Tüm bayiler</button>';
+    h += b('pdf', 'PDF · A4 yatay', 'primary') + b('xlsx', 'Excel') + b('html', 'HTML');
+    return h + '</div><div class="hint">' + (one ? 'Çıktıda bu bayinin tüm bilgileri var: stok, yıllara göre satış, model detayları ve eksik modeller.' : 'Çıktıda her bayi ayrı bir A4 yatay sayfada (' + fmt(n) + ' bayi): stok, yıllara göre satış, model detayları ve eksik modeller.') + ' Dosyalar farklı kaydet penceresiyle istediğiniz klasöre kaydedilir.</div>';
+  }
+  function karneListHtml(rows) {
+    var ys = SY();
+    if (!rows.length) return '<div class="panel empty">' + (S.kq ? '“' + esc(S.kq) + '” aramasına uyan bayi bulunamadı.' : 'Bu filtreyle bayi bulunamadı.') + '</div>';
+    var h = '<div class="panel"><div class="rwrap"><table class="rt kl"><thead><tr><th class="l">Bayi</th><th class="g1">Stok adedi</th><th>Eksik model</th>' + ys.map(function (y, i) { return '<th class="g' + gOf(i) + '">' + esc(yLabel(i)) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    rows.forEach(function (r) {
+      var mc = missGroups(r.d).miss.length;
+      h += '<tr><td class="l nm1"><button type="button" class="lnk" data-kdealer="' + esc(r.d.c) + '">' + esc(r.d.n) + '</button><span class="sm">, ' + esc(r.d.s) + ', ' + esc(r.d.pl) + '</span></td><td class="num g1"><b>' + fmt(r.t) + '</b></td><td class="num">' + (mc ? '<b class="redn">' + mc + '</b>' : '<span class="na">Yok</span>') + '</td>';
+      ys.forEach(function (y, i) { h += '<td class="num g' + gOf(i) + '"><b>' + (r['st' + i] == null ? '<span class="na">–</span>' : fmt(r['st' + i])) + '</b></td>'; });
+      h += '</tr>';
+    });
+    return h + '</tbody></table></div></div>';
+  }
+  function renderKarne() {
+    fillKarneSel();
+    var one = S.kd !== 'ALL' ? dealerByCode(S.kd) : null;
+    $('kSearchField').hidden = !!one;
+    if (one) { $('karneBody').innerHTML = karneToolbar(one, 1) + salesNote() + analizDetailHtml(one); return; }
+    var rows = kRows();
+    $('karneBody').innerHTML = karneToolbar(null, rows.length) + '<div class="rintro"><b>Bayi Karnesi</b><br><span>' + fmt(rows.length) + ' bayi · Bayi adına dokunun: stok, yıllara göre satış (Bajaj + Kanuni), model detayları ve eksik modeller açılır.</span></div>' + salesNote() + summaryHtml(summaryBoxes(rows)) + karneListHtml(rows);
   }
 
   /* ----- PDF ----- */
@@ -1968,7 +2081,7 @@ table.mx { width: 100%; min-width: 0; }
       styles: { font: 'Inter', fontSize: o.fs || 8.5, cellPadding: o.cp || 1.9, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle', overflow: 'linebreak' },
       headStyles: { fillColor: HDR, textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
       footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [247, 248, 250] }, columnStyles: o.cs || {}
+      alternateRowStyles: { fillColor: ZEBRA }, columnStyles: o.cs || {}
     });
     return doc.lastAutoTable.finalY + 6;
   }
@@ -1987,9 +2100,9 @@ table.mx { width: 100%; min-width: 0; }
     data.forEach(function (o) {
       var nm = o.d.n + '\n' + cityPl(o.d);
       if (sub === 'stok') {
-        body.push([{ content: o.d.n + ' · ' + cityPl(o.d) + '   |   Toplam: ' + fmt(o.tT) + ' adet', colSpan: nc, styles: { fillColor: [238, 241, 246], fontStyle: 'bold', halign: 'left', textColor: INK } }]);
+        body.push([{ content: o.d.n + ' · ' + cityPl(o.d) + '   |   Toplam: ' + fmt(o.tT) + ' adet', colSpan: nc, styles: { fillColor: [196, 212, 235], fontStyle: 'bold', halign: 'left', textColor: INK } }]);
         if (!o.rows.length) body.push([{ content: 'Stok yok', colSpan: nc, styles: { halign: 'left', textColor: GREY } }]);
-        o.rows.forEach(function (r) { body.push([{ content: ds.models[r.i].n, styles: { halign: 'left' } }].concat(sp ? [fmt(r.f), fmt(r.k)] : []).concat([{ content: fmt(r.t), styles: { fontStyle: 'bold' } }])); });
+        o.rows.forEach(function (r, j) { var zf = j % 2 === 1 ? ZEBRA : [255, 255, 255]; body.push([{ content: ds.models[r.i].n, styles: { halign: 'left', fillColor: zf } }].concat(sp ? [{ content: fmt(r.f), styles: { fillColor: zf } }, { content: fmt(r.k), styles: { fillColor: zf } }] : []).concat([{ content: fmt(r.t), styles: { fontStyle: 'bold', fillColor: zf } }])); });
         return;
       }
       if (sub === 'eksik') body.push([nm, { content: String(o.miss.length), styles: { halign: 'center', fontStyle: 'bold' } }, modTxt(o.miss, false)]);
@@ -2006,6 +2119,7 @@ table.mx { width: 100%; min-width: 0; }
 
   var GC = { 1: [18, 66, 122], 2: [15, 118, 110], 3: [180, 83, 9] };
   var GT = { 1: [236, 242, 250], 2: [231, 245, 243], 3: [253, 242, 228] };
+  var GT2 = { 1: [220, 232, 246], 2: [212, 235, 232], 3: [249, 229, 205] };
   function pdfBoxes(doc, y, boxes) {
     var W = doc.internal.pageSize.getWidth(), n = boxes.length, gap = 3, w = (W - 28 - gap * (n - 1)) / n, h = 22;
     boxes.forEach(function (bx, i) {
@@ -2023,14 +2137,14 @@ table.mx { width: 100%; min-width: 0; }
     return y + h + 4;
   }
   function gHead(txt, g, extra) { return Object.assign({ content: txt, styles: { fillColor: GC[g], textColor: [255, 255, 255], halign: 'center' } }, extra || {}); }
-  function gCell(txt, g, bold) { return { content: txt, styles: { fillColor: GT[g], fontStyle: bold ? 'bold' : 'normal', halign: 'center' } }; }
+  function gCell(txt, g, bold) { return { content: txt, styles: { fillColor: (ZODD ? GT2 : GT)[g], fontStyle: bold ? 'bold' : 'normal', halign: 'center' } }; }
 
   function pdfDealerPage(doc, d, first) {
     if (!first) doc.addPage();
     var sp = !!ds.stats.split, ms = detailModels(d), ys = SY(), row = mkRow(d), nb = BR.length, W = doc.internal.pageSize.getWidth();
     var f = sum(ms.map(function (r) { return r.f; })), k = sum(ms.map(function (r) { return r.k; })), t = sum(ms.map(function (r) { return r.t; }));
     var y = 24;
-    doc.setFont('Inter', 'bold'); doc.setFontSize(8.5); tc(doc, GREY); doc.text('BAYİ KARNESİ · BAYİ STOK ANALİZİ', 14, y); y += 5.5;
+    doc.setFont('Inter', 'bold'); doc.setFontSize(8.5); tc(doc, GREY); doc.text('BAYİ KARNESİ', 14, y); y += 5.5;
     doc.setFontSize(14); tc(doc, NAVY); doc.text(d.n, 14, y);
     doc.setFont('Inter', 'normal'); doc.setFontSize(9); tc(doc, GREY); doc.text(d.s + ' · ' + d.c + ' · ' + d.pk + ' · ' + d.pl, W - 14, y, { align: 'right' }); y += 5;
     y = pdfBoxes(doc, y, summaryBoxes([row]));
@@ -2048,15 +2162,9 @@ table.mx { width: 100%; min-width: 0; }
         margin: { top: 22, bottom: 14, left: 14, right: W - 14 - wl }, tableWidth: wl, rowPageBreak: 'avoid',
         styles: { font: 'Inter', fontSize: 7.8, cellPadding: 0.95, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle' },
         headStyles: { fillColor: GC[1], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [247, 248, 250] }, columnStyles: cs
+        alternateRowStyles: { fillColor: ZEBRA }, columnStyles: cs
       });
       y1 = doc.lastAutoTable.finalY + 4;
-    }
-    var mn = missingNames(d);
-    if (mn.length) {
-      doc.setFont('Inter', 'bold'); doc.setFontSize(7.5); tc(doc, INK);
-      var ls = doc.splitTextToSize('Stokta olmayan modeller (' + mn.length + '): ' + mn.join(', '), wl);
-      if (y1 + ls.length * 3.4 < 200) doc.text(ls, 14, y1 + 1);
     }
     /* sağ: aylık satış */
     var xr = 14 + wl + 6, wr = W - 14 - xr;
@@ -2064,6 +2172,7 @@ table.mx { width: 100%; min-width: 0; }
     var heads = [[gHead('Ay', 1, { rowSpan: 2, styles: { fillColor: HDR, textColor: [255, 255, 255], halign: 'center' } })].concat(ys.map(function (yy, i) { return gHead(yLabel(i), gOf(i), { colSpan: nb + 1 }); })),
       [].concat.apply([], ys.map(function (yy, i) { return BR.map(function (b) { return gHead(b.n, gOf(i)); }).concat([gHead('Toplam', gOf(i))]); }))];
     var mb = MONTHS.map(function (m, mi) {
+      ZODD = mi % 2 === 1;
       var line = [{ content: m, styles: { halign: 'left' } }];
       ys.forEach(function (yy, yi) {
         var vs = BR.map(function (b, bi) { return mVal(row.rec[bi], yy, mi, b); }), ok = vs.filter(function (v) { return v != null; });
@@ -2072,6 +2181,7 @@ table.mx { width: 100%; min-width: 0; }
       });
       return line;
     });
+    ZODD = false;
     var ft = [{ content: 'Toplam', styles: { halign: 'left' } }];
     ys.forEach(function (yy, yi) {
       var vs = BR.map(function (b, bi) { return row.rec[bi] ? ySum(row.rec[bi], yy) : null; }), ok = vs.filter(function (v) { return v != null; });
@@ -2081,14 +2191,37 @@ table.mx { width: 100%; min-width: 0; }
       startY: top + 5, head: heads, body: mb, foot: [ft], showFoot: 'lastPage', theme: 'grid',
       margin: { top: 22, bottom: 14, left: xr, right: 14 }, tableWidth: wr, rowPageBreak: 'avoid',
       styles: { font: 'Inter', fontSize: 7.8, cellPadding: 0.95, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle' },
-      headStyles: { fontStyle: 'bold', halign: 'center' }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' },
+      headStyles: { fontStyle: 'bold', halign: 'center' }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' }, alternateRowStyles: { fillColor: ZEBRA },
       columnStyles: { 0: { cellWidth: 20, halign: 'left' } }
     });
     var y2 = doc.lastAutoTable.finalY + 3.5;
     var note = salesAsOf() ? ys[ys.length - 1] + ' yılı tamamlanmadı: satışlar ' + trDate(salesAsOf()) + ' rapor tarihine kadardır.' : '';
     var miss = BR.filter(function (b, bi) { return SRC(b) && !row.rec[bi]; }).map(function (b) { return b.n; });
     if (miss.length) note += (note ? ' ' : '') + 'Satış dosyasında ' + miss.join(' ve ') + ' satış kaydı yok (“–”).';
-    if (note) { doc.setFont('Inter', 'normal'); doc.setFontSize(7); tc(doc, GREY); doc.text(doc.splitTextToSize(note, wr), xr, y2); }
+    var nl = [];
+    if (note) { doc.setFont('Inter', 'normal'); doc.setFontSize(7); tc(doc, GREY); nl = doc.splitTextToSize(note, wr); doc.text(nl, xr, y2); }
+    pdfEksik(doc, d, xr, y2 + nl.length * 3 + 4, wr);
+  }
+  function pdfEksik(doc, d, x, y, w) {
+    var g = missGroups(d), H = doc.internal.pageSize.getHeight(), W = doc.internal.pageSize.getWidth(), items = [];
+    if (!g.miss.length) items.push(['Eksik model yoktur. Tüm modellerden bayide bayiye faturalı veya konsinye stok bulunuyor.', true]);
+    else { items.push(['Bayiye faturalı ve konsinyede olmayan modeller (' + g.miss.length + '):', true]); missBrandTxt(g.miss).forEach(function (q) { items.push([q[0] + ': ' + q[1], false]); }); }
+    if (g.unk.length) { items.push(['Stok bilgisi dosyada olmayan modeller (' + g.unk.length + '):', true]); missBrandTxt(g.unk).forEach(function (q) { items.push([q[0] + ': ' + q[1], false]); }); }
+    var lay = function (ww) {
+      var out = [];
+      items.forEach(function (it) { doc.setFont('Inter', it[1] ? 'bold' : 'normal'); doc.setFontSize(8); doc.splitTextToSize(it[0], ww - 6).forEach(function (l) { out.push([l, it[1]]); }); });
+      return out;
+    };
+    var ls = lay(w), hh = 4 + 3.2 + ls.length * 3.7 + 1.6;
+    if (y + hh > H - 16) { doc.addPage(); y = 24; x = 14; w = W - 28; ls = lay(w); hh = 4 + 3.2 + ls.length * 3.7 + 1.6; }
+    doc.setFont('Inter', 'bold'); doc.setFontSize(11); tc(doc, NAVY); doc.text('Eksik modeller', x, y + 1.5);
+    var ok = !g.miss.length, by = y + 4;
+    doc.setFillColor(ok ? 231 : 253, ok ? 245 : 238, ok ? 235 : 236); doc.setDrawColor(ok ? 27 : 198, ok ? 122 : 47, ok ? 58 : 36); doc.setLineWidth(.3);
+    doc.roundedRect(x, by, w, hh - 4, 1.5, 1.5, 'FD');
+    ls.forEach(function (l, i) {
+      doc.setFont('Inter', l[1] ? 'bold' : 'normal'); doc.setFontSize(8); tc(doc, ok ? [27, 107, 52] : INK);
+      doc.text(l[0], x + 3, by + 4.6 + i * 3.7);
+    });
   }
   function pdfAnalizList(rows) {
     var doc = pdfNew('l'), sp = !!ds.stats.split, ys = SY(), nb = BR.length, W = doc.internal.pageSize.getWidth();
@@ -2097,11 +2230,13 @@ table.mx { width: 100%; min-width: 0; }
     y = pdfBoxes(doc, y, summaryBoxes(rows));
     var heads = [[{ content: 'Bayi', rowSpan: 2, styles: { fillColor: HDR, textColor: [255, 255, 255], halign: 'center' } }, gHead('Stok', 1, { colSpan: 3 + (sp ? 2 : 0) })].concat(ys.map(function (yy, i) { return gHead(yLabel(i), gOf(i), { colSpan: nb + 1 }); })),
       ['Bajaj', 'Kanuni', 'Toplam'].concat(sp ? ['Faturalı', 'Konsinye'] : []).map(function (x) { return gHead(x, 1); }).concat([].concat.apply([], ys.map(function (yy, i) { return BR.map(function (b) { return gHead(b.n, gOf(i)); }).concat([gHead('Toplam', gOf(i))]); })))];
-    var body = rows.map(function (r) {
+    var body = rows.map(function (r, ri) {
+      ZODD = ri % 2 === 1;
       var line = [{ content: r.d.n + ', ' + r.d.s + ', ' + r.d.pl, styles: { halign: 'left' } }, gCell(fmt(r.sb), 1), gCell(fmt(r.sk), 1), gCell(fmt(r.t), 1, true)].concat(sp ? [gCell(fmt(r.f), 1), gCell(fmt(r.k), 1)] : []);
       ys.forEach(function (yy, i) { BR.forEach(function (b, bi) { line.push(gCell(nn(r[sKey(bi, i)]), gOf(i))); }); line.push(gCell(nn(r['st' + i]), gOf(i), true)); });
       return line;
     });
+    ZODD = false;
     var ft = [{ content: 'Genel toplam (' + rows.length + ' bayi)', styles: { halign: 'left' } }].concat([fmt(sum(rows.map(function (r) { return r.sb; }))), fmt(sum(rows.map(function (r) { return r.sk; }))), fmt(sum(rows.map(function (r) { return r.t; })))].concat(sp ? [fmt(sum(rows.map(function (r) { return r.f; }))), fmt(sum(rows.map(function (r) { return r.k; })))] : []));
     ys.forEach(function (yy, i) { BR.forEach(function (b, bi) { ft.push(nn(sSum(rows, bi, i))); }); ft.push(nn(sAll(rows, i))); });
     ft = ft.map(function (c, i) { return typeof c === 'object' ? c : { content: c, styles: { halign: 'center' } }; });
@@ -2111,7 +2246,7 @@ table.mx { width: 100%; min-width: 0; }
     else doc.autoTable({
       startY: y, head: heads, body: body, foot: [ft], showFoot: 'lastPage', theme: 'grid', margin: { top: 22, bottom: 14, left: 14, right: 14 }, rowPageBreak: 'avoid',
       styles: { font: 'Inter', fontSize: 7.2, cellPadding: 0.7, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle', overflow: 'linebreak' },
-      headStyles: { fontStyle: 'bold', halign: 'center' }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' }, columnStyles: cs
+      headStyles: { fontStyle: 'bold', halign: 'center' }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' }, alternateRowStyles: { fillColor: ZEBRA }, columnStyles: cs
     });
     /* Bayi adı aratıldıysa: seçilen bayilerin model detayları ve aylık satışları da çıktıya eklenir */
     if (S.aq && rows.length) rows.forEach(function (r) { pdfDealerPage(doc, r.d, false); });
@@ -2158,7 +2293,7 @@ table.mx { width: 100%; min-width: 0; }
     widths(w4, [12, 32, 14, 10, 22, 11, 11, 11]); w4.views = [{ state: 'frozen', ySplit: 1 }]; w4.autoFilter = { from: 'A1', to: sp ? 'H1' : 'F1' };
     polish(wb); wrapCols(w3, sp ? [6, 8] : [6]); return wb;
   }
-  function buildAnalizWorkbook(d) {
+  function buildAnalizWorkbook(d, rowsIn) {
     var sp = !!ds.stats.split, ys = SY(), wb = new ExcelJS.Workbook(); wb.creator = 'ORACLE BAYİ STOK RAPORU'; wb.created = new Date();
     var salesHead = function (prefixBrand) {
       var h = [];
@@ -2179,7 +2314,7 @@ table.mx { width: 100%; min-width: 0; }
       var f = sum(ms.map(function (r) { return r.f; })), k = sum(ms.map(function (r) { return r.k; })), t = sum(ms.map(function (r) { return r.t; }));
       var w1 = wb.addWorksheet('Özet');
       w1.addRow(['Alan', 'Değer']);
-      [['Bayi', d.n], ['Cari kodu', d.c], ['Şehir', d.s], ['Plasiyer', d.pk + ' ' + d.pl], ['Bajaj stok adedi', row.sb], ['Kanuni stok adedi', row.sk], ['Toplam stok adedi', row.t]].forEach(function (r) { w1.addRow(r); });
+      [['Bayi', d.n], ['Cari kodu', d.c], ['Şehir', d.s], ['Plasiyer', d.pk + ' ' + d.pl], ['Bajaj stok adedi', row.sb], ['Kanuni stok adedi', row.sk], ['Toplam stok adedi', row.t], ['Eksik model sayısı', missGroups(d).miss.length], ['Eksik modeller', missPlain(d)]].forEach(function (r) { w1.addRow(r); });
       if (sp) { w1.addRow(['Bayiye faturalı adet', f]); w1.addRow(['Konsinye adet', k]); }
       var sh = salesHead(), sc = salesCells(row);
       sh.forEach(function (lab, i) { w1.addRow([lab, sc[i]]); });
@@ -2202,16 +2337,22 @@ table.mx { width: 100%; min-width: 0; }
       });
       w3.addRow(['Toplam'].concat(sc));
       widths(w3, [14].concat(sh.map(function () { return 22; })));
+      var we = wb.addWorksheet('Eksik Modeller'), ge = missGroups(d);
+      we.addRow(['Marka', 'Model', 'Durum']);
+      if (!ge.miss.length) we.addRow(['', 'Eksik model yoktur', '']);
+      ge.miss.forEach(function (i) { we.addRow([bname(ds.models[i].b), ds.models[i].n, 'Bayiye faturalı ve konsinye yok']); });
+      ge.unk.forEach(function (i) { we.addRow([bname(ds.models[i].b), ds.models[i].n, 'Stok bilgisi dosyada yok']); });
+      widths(we, [14, 28, 36]);
       return polish(wb);
     }
-    var rows = analizRows();
+    var rows = rowsIn || analizRows();
     var wl = wb.addWorksheet('Bayi Karnesi');
-    wl.addRow(['Plasiyer', 'Bayi kodu', 'Bayi', 'Şehir', 'Bajaj stok', 'Kanuni stok', 'Toplam stok'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(salesHead()));
-    rows.forEach(function (r) { wl.addRow([r.d.pk + ' ' + r.d.pl, r.d.c, r.d.n, r.d.s, r.sb, r.sk, r.t].concat(sp ? [r.f, r.k] : []).concat(salesCells(r))); });
+    wl.addRow(['Plasiyer', 'Bayi kodu', 'Bayi', 'Şehir', 'Bajaj stok', 'Kanuni stok', 'Toplam stok'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(salesHead()).concat(['Eksik model sayısı', 'Eksik modeller']));
+    rows.forEach(function (r) { wl.addRow([r.d.pk + ' ' + r.d.pl, r.d.c, r.d.n, r.d.s, r.sb, r.sk, r.t].concat(sp ? [r.f, r.k] : []).concat(salesCells(r)).concat([missGroups(r.d).miss.length, missPlain(r.d)])); });
     var tot = { };
     ys.forEach(function (y, i) { BR.forEach(function (b, bi) { tot[sKey(bi, i)] = SRC(b) ? sSum(rows, bi, i) : null; }); });
-    wl.addRow(['Genel toplam', '', '', '', sum(rows.map(function (r) { return r.sb; })), sum(rows.map(function (r) { return r.sk; })), sum(rows.map(function (r) { return r.t; }))].concat(sp ? [sum(rows.map(function (r) { return r.f; })), sum(rows.map(function (r) { return r.k; }))] : []).concat(salesCells(tot)));
-    widths(wl, [26, 12, 32, 14, 11, 11, 12].concat(sp ? [11, 11] : []).concat(salesHead().map(function () { return 20; })));
+    wl.addRow(['Genel toplam', '', '', '', sum(rows.map(function (r) { return r.sb; })), sum(rows.map(function (r) { return r.sk; })), sum(rows.map(function (r) { return r.t; }))].concat(sp ? [sum(rows.map(function (r) { return r.f; })), sum(rows.map(function (r) { return r.k; }))] : []).concat(salesCells(tot)).concat(['', '']));
+    widths(wl, [26, 12, 32, 14, 11, 11, 12].concat(sp ? [11, 11] : []).concat(salesHead().map(function () { return 20; })).concat([14, 70]));
     wl.views = [{ state: 'frozen', ySplit: 1, xSplit: 3 }];
     var wm = wb.addWorksheet('Model Detayları');
     wm.addRow(['Bayi kodu', 'Bayi', 'Şehir', 'Marka', 'Model'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(['Toplam']));
@@ -2227,9 +2368,20 @@ table.mx { width: 100%; min-width: 0; }
       ws.addRow(line);
     });
     widths(ws, [12, 32, 14].concat(hd.slice(3).map(function () { return 14; }))); ws.views = [{ state: 'frozen', ySplit: 1, xSplit: 3 }];
+    var base = 7 + (sp ? 2 : 0);
+    var we2 = wb.addWorksheet('Eksik Modeller');
+    we2.addRow(['Bayi kodu', 'Bayi', 'Şehir', 'Marka', 'Model', 'Durum']);
+    rows.forEach(function (r) {
+      var ge = missGroups(r.d);
+      if (!ge.miss.length && !ge.unk.length) we2.addRow([r.d.c, r.d.n, r.d.s, '', 'Eksik model yoktur', '']);
+      ge.miss.forEach(function (i) { we2.addRow([r.d.c, r.d.n, r.d.s, bname(ds.models[i].b), ds.models[i].n, 'Bayiye faturalı ve konsinye yok']); });
+      ge.unk.forEach(function (i) { we2.addRow([r.d.c, r.d.n, r.d.s, bname(ds.models[i].b), ds.models[i].n, 'Stok bilgisi dosyada yok']); });
+    });
+    widths(we2, [12, 32, 14, 10, 26, 34]); we2.views = [{ state: 'frozen', ySplit: 1 }]; we2.autoFilter = { from: 'A1', to: 'F1' };
     polish(wb);
+    wrapCols(wl, [base + ys.length * (BR.length + 1) + 2]);
     /* sütun gruplarını başlıkta renklendir: stok mavi, ilk yıl satış yeşil, son yıl satış turuncu */
-    var gcol = { 2: 'FF0F766E', 3: 'FFB45309' }, base = 7 + (sp ? 2 : 0);
+    var gcol = { 2: 'FF0F766E', 3: 'FFB45309' };
     ys.forEach(function (y, i) {
       for (var c = base + 1 + i * (BR.length + 1); c <= base + (i + 1) * (BR.length + 1); c++) wl.getCell(1, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: gcol[gOf(i)] } };
     });
@@ -2263,6 +2415,14 @@ table.mx { width: 100%; min-width: 0; }
     } finally { STATIC = keep; }
   }
 
+  function karneSnapshot(rows) {
+    var keep = STATIC; STATIC = true;
+    try {
+      var body = salesNote() + rows.map(function (r, i) { return '<div' + (i ? ' class="pgbrk"' : '') + '>' + analizDetailHtml(r.d) + '</div>'; }).join('');
+      return pageHtml('Bayi Karnesi' + (rows.length === 1 ? ' · ' + rows[0].d.n : ''), pkTxt() + (S.kq ? ' · Arama: ' + S.kq : '') + ' · ' + rows.length + ' bayi', body, true);
+    } finally { STATIC = keep; }
+  }
+
   /* ----- indirme düğmeleri ----- */
   function busy(sel, on) { Array.prototype.forEach.call(document.querySelectorAll(sel), function (b) { b.disabled = on; }); }
   async function durumExport() {
@@ -2276,6 +2436,19 @@ table.mx { width: 100%; min-width: 0; }
       if (ok) toast('Dosya hazır: ' + name);
     } catch (e) { if (!e || e.code !== 'declined') toast('Dosya oluşturulamadı' + (e && e.message ? ': ' + e.message : '')); }
     finally { busy('#btnDurum', false); }
+  }
+  async function karneExport(kind) {
+    var one = S.kd !== 'ALL' ? dealerByCode(S.kd) : null, rows = one ? [mkRow(one)] : kRows();
+    if (!rows.length) { toast('Çıktı alınacak bayi yok'); return; }
+    var base = 'bayi-karnesi-' + (one ? slug(one.n) : (S.pk === 'ALL' ? 'tum-bayiler' : slug(S.pk)) + (S.kq ? '-' + slug(S.kq) : '')) + '-' + stamp(), name, ok;
+    busy('#karneBody .tbar button', true);
+    try {
+      if (kind === 'xlsx') { name = base + '.xlsx'; var buf = await (one ? buildAnalizWorkbook(one) : buildAnalizWorkbook(null, rows)).xlsx.writeBuffer(); ok = await saveFile(name, buf, XLSX_MIME, true); }
+      else if (kind === 'html') { name = base + '.html'; ok = await saveFile(name, karneSnapshot(rows), 'text/html', true); }
+      else { await loadPdf(); name = base + '.pdf'; ok = await saveFile(name, pdfAnalizEach(rows).output('arraybuffer'), 'application/pdf', true); }
+      if (ok) toast('Dosya hazır: ' + name);
+    } catch (e) { if (!e || e.code !== 'declined') toast('Dosya oluşturulamadı' + (e && e.message ? ': ' + e.message : '')); }
+    finally { busy('#karneBody .tbar button', false); }
   }
   async function analizExport(kind) {
     var d = S.aDealer ? dealerByCode(S.aDealer) : null, base = 'bayi-karnesi-' + (d ? slug(d.n) : 'liste') + '-' + stamp(), name, ok;
@@ -2341,6 +2514,15 @@ table.mx { width: 100%; min-width: 0; }
   $('selDealer').addEventListener('change', function (e) { S.dd = e.target.value; render(); });
   $('durumBody').addEventListener('click', function (e) { if (e.target.closest('#btnDOpen')) { S.dopen = !S.dopen; render(); } });
   var aqt; $('aq').addEventListener('input', function (e) { clearTimeout(aqt); aqt = setTimeout(function () { S.aq = e.target.value; renderAnaliz(); }, 120); });
+  $('selKarne').addEventListener('change', function (e) { S.kd = e.target.value; renderKarne(); });
+  var kqt; $('kq').addEventListener('input', function (e) { clearTimeout(kqt); kqt = setTimeout(function () { S.kq = e.target.value; renderKarne(); }, 120); });
+  $('karneBody').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-kdealer],[data-kback],[data-kexp]');
+    if (!b) return;
+    if (b.dataset.kexp) { karneExport(b.dataset.kexp); return; }
+    if (b.dataset.kdealer) { S.kd = b.dataset.kdealer; renderKarne(); window.scrollTo(0, 0); return; }
+    if (b.dataset.kback) { S.kd = 'ALL'; renderKarne(); window.scrollTo(0, 0); }
+  });
   $('analizBody').addEventListener('click', function (e) {
     var b = e.target.closest('[data-sort],[data-adealer],[data-aback],[data-aexp]');
     if (!b) return;
