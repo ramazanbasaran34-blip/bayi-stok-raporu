@@ -474,6 +474,40 @@ table.mx { width: 100%; min-width: 0; }
 .rkick { font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
 .rh3 + .kpis { margin-top: 0; }
 @media print { .rt.an { min-width: 0 !important; } .rt.an thead tr:nth-child(2) th { font-size: 7.5px !important; } .rkick { font-size: 8px !important; } }
+
+/* ---- Bayi Karnesi: renk grupları ve birleşik özet kutuları ---- */
+:root { --g1: #12427a; --g2: #0f766e; --g3: #b45309; }
+.kboxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+.kbox { border: 1px solid var(--gc); border-top: 3px solid var(--gc); border-radius: 8px; padding: 7px 10px 6px; background: color-mix(in srgb, var(--gc) 7%, var(--surface)); min-width: 0; }
+.kbox.g1 { --gc: var(--g1); } .kbox.g2 { --gc: var(--g2); } .kbox.g3 { --gc: var(--g3); }
+.kbox .kt { font-family: var(--font-head); font-weight: 700; font-size: 13px; color: var(--gc); letter-spacing: .01em; margin-bottom: 2px; }
+.kbox .kr { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; line-height: 1.5; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.kbox .kr b { color: var(--fg); font-weight: 600; }
+.kbox .kr.tot { border-top: 1px solid color-mix(in srgb, var(--gc) 40%, transparent); margin-top: 2px; padding-top: 2px; color: var(--fg); font-weight: 600; }
+.kbox .kr.tot b { font-weight: 800; font-size: 15.5px; }
+.rt thead th.g1 { background: var(--g1); } .rt thead th.g2 { background: var(--g2); } .rt thead th.g3 { background: var(--g3); }
+.rt thead th.gh { font-size: 13px; letter-spacing: .02em; }
+.rt td.g1, .rt tfoot td.g1 { background: color-mix(in srgb, var(--g1) 7%, var(--surface)); }
+.rt td.g2, .rt tfoot td.g2 { background: color-mix(in srgb, var(--g2) 8%, var(--surface)); }
+.rt td.g3, .rt tfoot td.g3 { background: color-mix(in srgb, var(--g3) 9%, var(--surface)); }
+.rt.an thead tr:nth-child(2) th { font-size: 12px; }
+.rt.an { min-width: 980px; font-size: 14.5px; }
+.rt.an td.num, .rt.an th { padding-left: 4px; padding-right: 4px; }
+.rcols { display: flex; flex-direction: column; gap: 12px; }
+.rcols > div { min-width: 0; }
+@media (min-width: 1100px) { .rcols { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; } }
+.pgbrk { margin-top: 18px; }
+@media print {
+  .kboxes { grid-template-columns: repeat(4, 1fr) !important; gap: 4px !important; }
+  .kbox { padding: 3px 7px !important; border-radius: 5px !important; }
+  .kbox .kt { font-size: 8.5px !important; }
+  .kbox .kr { font-size: 8px !important; line-height: 1.35 !important; }
+  .kbox .kr.tot b { font-size: 9px !important; }
+  .rt.an { min-width: 0 !important; font-size: 8px !important; }
+  .rcols { display: grid !important; grid-template-columns: 5fr 6fr !important; gap: 8px !important; align-items: start; }
+  .pgbrk { break-before: page; margin-top: 0 !important; }
+  .rt thead th, .rt td.g1, .rt td.g2, .rt td.g3, .kbox { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 @media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s; } }
 </style>
 </head>
@@ -1741,6 +1775,7 @@ table.mx { width: 100%; min-width: 0; }
     var s = dStock(d, allMods()), o = { d: d, f: s.f, k: s.k, t: s.t, sb: dStock(d, visModels('BAJAJ')).t, sk: dStock(d, visModels('KANUNİ')).t, rec: [] };
     var ys = SY();
     BR.forEach(function (b, bi) { var rec = recOf(b, d.c); o.rec[bi] = rec; ys.forEach(function (y, i) { o[sKey(bi, i)] = rec ? ySum(rec, y) : null; }); });
+    ys.forEach(function (y, i) { var ok = BR.map(function (b, bi) { return o[sKey(bi, i)]; }).filter(function (v) { return v != null; }); o['st' + i] = ok.length ? sum(ok) : null; });
     return o;
   }
   function analizRows() {
@@ -1759,25 +1794,23 @@ table.mx { width: 100%; min-width: 0; }
   function missingNames(d) {
     return allMods().filter(function (i) { return total(d, i) <= 0; }).map(function (i) { return ds.models[i].n; });
   }
-  /* Üst özet: stok (Bajaj / Kanuni / toplam / faturalı / konsinye) ve satış (yıl x marka) */
-  function summaryGroups(rows, withCount) {
-    var sp = !!ds.stats.split, ys = SY(), st = [], sl = [];
-    if (withCount) st.push({ v: fmt(rows.length), l: 'Bayi' });
-    st.push({ v: fmt(sum(rows.map(function (r) { return r.sb; }))), l: 'Bajaj stok adedi' });
-    st.push({ v: fmt(sum(rows.map(function (r) { return r.sk; }))), l: 'Kanuni stok adedi' });
-    st.push({ v: fmt(sum(rows.map(function (r) { return r.t; }))), l: 'Toplam stok adedi' });
-    if (sp) { st.push({ v: fmt(sum(rows.map(function (r) { return r.f; }))), l: 'Bayiye faturalı adet' }); st.push({ v: fmt(sum(rows.map(function (r) { return r.k; }))), l: 'Konsinye adet' }); }
+  /* Renk grupları: 1 = stok (mavi), 2 = ilk yıl satış (yeşil), 3 = son yıl satış (turuncu) */
+  function gOf(i) { return i === 0 ? 2 : 3; }
+  /* Üst özet: her kutuda Bajaj / Kanuni / Toplam birlikte */
+  function summaryBoxes(rows) {
+    var sp = !!ds.stats.split, ys = SY(), bx = [];
+    var sT = function (k) { return fmt(sum(rows.map(function (r) { return r[k]; }))); };
+    bx.push({ g: 1, t: 'Stok adedi', r: [['Bajaj', sT('sb')], ['Kanuni', sT('sk')], ['Toplam', sT('t'), 1]] });
+    if (sp) bx.push({ g: 1, t: 'Faturalı / Konsinye', r: [['Bayiye faturalı', sT('f')], ['Konsinye', sT('k')], ['Toplam', sT('t'), 1]] });
     ys.forEach(function (y, i) {
-      BR.forEach(function (b, bi) { sl.push({ v: nn(sSum(rows, bi, i)), l: b.n + ' ' + yLabel(i) }); });
-      sl.push({ v: nn(sAll(rows, i)), l: 'Toplam ' + yLabel(i) });
+      bx.push({ g: gOf(i), t: yLabel(i), r: BR.map(function (b, bi) { return [b.n, nn(sSum(rows, bi, i))]; }).concat([['Toplam', nn(sAll(rows, i)), 1]]) });
     });
-    return [{ t: 'Stok özeti', items: st }, { t: 'Satış özeti', items: sl }];
+    return bx;
   }
-  function kpiHtml(items) {
-    return '<div class="kpis">' + items.map(function (x) { return '<div class="kpi"><div class="v">' + esc(x.v) + '</div><div class="l">' + esc(x.l) + '</div></div>'; }).join('') + '</div>';
-  }
-  function summaryHtml(groups) {
-    return groups.map(function (g) { return '<h3 class="rh3">' + esc(g.t) + '</h3>' + kpiHtml(g.items); }).join('');
+  function summaryHtml(boxes) {
+    return '<div class="kboxes">' + boxes.map(function (x) {
+      return '<div class="kbox g' + x.g + '"><div class="kt">' + esc(x.t) + '</div>' + x.r.map(function (l) { return '<div class="kr' + (l[2] ? ' tot' : '') + '"><span>' + esc(l[0]) + '</span><b>' + esc(l[1]) + '</b></div>'; }).join('') + '</div>';
+    }).join('') + '</div>';
   }
   function salesNote() {
     if (!hasAnySales()) return '<div class="notice">Satış adedi verisi yüklenmemiş. “İndir” menüsündeki “Excel ile güncelle” bölümünden Bajaj ve Kanuni satış adedi dosyalarını seçin.</div>';
@@ -1785,45 +1818,48 @@ table.mx { width: 100%; min-width: 0; }
     return miss.length ? '<div class="notice">' + esc(miss.join(', ')) + ' satış adedi dosyası yüklenmemiş; bu sütunlar “–” görünür. “İndir” menüsündeki “Excel ile güncelle” bölümünden ekleyin.</div>' : '';
   }
   function analizListHtml(rows) {
-    var sp = !!ds.stats.split, ys = SY();
+    var sp = !!ds.stats.split, ys = SY(), nb = BR.length;
     if (!rows.length) return '<div class="panel empty">' + (S.aq ? '“' + esc(S.aq) + '” aramasına uyan bayi bulunamadı.' : 'Bu filtreyle bayi bulunamadı.') + '</div>';
-    var th = function (k, lab) { return '<th>' + hdrBtn('analiz', lab, k) + '</th>'; };
-    var h = '<div class="panel"><div class="rwrap"><table class="rt an"><thead><tr><th class="l" rowspan="2">' + hdrBtn('analiz', 'Bayi', 'name') + '</th><th colspan="' + (3 + (sp ? 2 : 0)) + '">Stok</th>' +
-      ys.map(function (y, i) { return '<th colspan="' + BR.length + '">' + esc(yLabel(i)) + '</th>'; }).join('') + '</tr><tr>' +
-      th('sb', 'Bajaj') + th('sk', 'Kanuni') + th('t', 'Toplam') + (sp ? th('f', 'Faturalı') + th('k', 'Konsinye') : '');
-    ys.forEach(function (y, i) { BR.forEach(function (b, bi) { h += th(sKey(bi, i), b.n); }); });
+    var th = function (k, lab, g) { return '<th class="g' + g + '">' + hdrBtn('analiz', lab, k) + '</th>'; };
+    var h = '<div class="panel"><div class="rwrap"><table class="rt an"><thead><tr><th class="l" rowspan="2">' + hdrBtn('analiz', 'Bayi', 'name') + '</th><th class="g1 gh" colspan="' + (3 + (sp ? 2 : 0)) + '">Stok</th>' +
+      ys.map(function (y, i) { return '<th class="g' + gOf(i) + ' gh" colspan="' + (nb + 1) + '">' + esc(yLabel(i)) + '</th>'; }).join('') + '</tr><tr>' +
+      th('sb', 'Bajaj', 1) + th('sk', 'Kanuni', 1) + th('t', 'Toplam', 1) + (sp ? th('f', 'Faturalı', 1) + th('k', 'Konsinye', 1) : '');
+    ys.forEach(function (y, i) { BR.forEach(function (b, bi) { h += th(sKey(bi, i), b.n, gOf(i)); }); h += th('st' + i, 'Toplam', gOf(i)); });
     h += '</tr></thead><tbody>';
     rows.forEach(function (r) {
       h += '<tr><td class="l nm1">' + (STATIC ? '<b>' + esc(r.d.n) + '</b>' : '<button type="button" class="lnk" data-adealer="' + esc(r.d.c) + '">' + esc(r.d.n) + '</button>') + '<span class="sm">, ' + esc(r.d.s) + ', ' + esc(r.d.pl) + '</span></td>' +
-        '<td class="num">' + fmt(r.sb) + '</td><td class="num">' + fmt(r.sk) + '</td><td class="num"><b>' + fmt(r.t) + '</b></td>' + (sp ? '<td class="num">' + fmt(r.f) + '</td><td class="num">' + fmt(r.k) + '</td>' : '');
-      ys.forEach(function (y, i) { BR.forEach(function (b, bi) { var v = r[sKey(bi, i)]; h += '<td class="num sale">' + (v == null ? '<span class="na">–</span>' : '<b>' + fmt(v) + '</b>') + '</td>'; }); });
+        '<td class="num g1">' + fmt(r.sb) + '</td><td class="num g1">' + fmt(r.sk) + '</td><td class="num g1"><b>' + fmt(r.t) + '</b></td>' + (sp ? '<td class="num g1">' + fmt(r.f) + '</td><td class="num g1">' + fmt(r.k) + '</td>' : '');
+      ys.forEach(function (y, i) {
+        BR.forEach(function (b, bi) { var v = r[sKey(bi, i)]; h += '<td class="num g' + gOf(i) + '">' + (v == null ? '<span class="na">–</span>' : fmt(v)) + '</td>'; });
+        h += '<td class="num g' + gOf(i) + '"><b>' + (r['st' + i] == null ? '<span class="na">–</span>' : fmt(r['st' + i])) + '</b></td>';
+      });
       h += '</tr>';
     });
-    h += '</tbody><tfoot><tr><td class="l">Genel toplam (' + rows.length + ' bayi)</td><td class="num">' + fmt(sum(rows.map(function (r) { return r.sb; }))) + '</td><td class="num">' + fmt(sum(rows.map(function (r) { return r.sk; }))) + '</td><td class="num">' + fmt(sum(rows.map(function (r) { return r.t; }))) + '</td>' +
-      (sp ? '<td class="num">' + fmt(sum(rows.map(function (r) { return r.f; }))) + '</td><td class="num">' + fmt(sum(rows.map(function (r) { return r.k; }))) + '</td>' : '');
-    ys.forEach(function (y, i) { BR.forEach(function (b, bi) { h += '<td class="num">' + nn(sSum(rows, bi, i)) + '</td>'; }); });
+    h += '</tbody><tfoot><tr><td class="l">Genel toplam (' + rows.length + ' bayi)</td><td class="num g1">' + fmt(sum(rows.map(function (r) { return r.sb; }))) + '</td><td class="num g1">' + fmt(sum(rows.map(function (r) { return r.sk; }))) + '</td><td class="num g1">' + fmt(sum(rows.map(function (r) { return r.t; }))) + '</td>' +
+      (sp ? '<td class="num g1">' + fmt(sum(rows.map(function (r) { return r.f; }))) + '</td><td class="num g1">' + fmt(sum(rows.map(function (r) { return r.k; }))) + '</td>' : '');
+    ys.forEach(function (y, i) { BR.forEach(function (b, bi) { h += '<td class="num g' + gOf(i) + '">' + nn(sSum(rows, bi, i)) + '</td>'; }); h += '<td class="num g' + gOf(i) + '">' + nn(sAll(rows, i)) + '</td>'; });
     return h + '</tr></tfoot></table></div></div>';
   }
   /* Aylık satış: yıl başına Bajaj / Kanuni / Toplam sütunları */
   function monthTable(row) {
     var ys = SY(), nb = BR.length;
-    var h = '<table class="rt ms"><thead><tr><th class="l" rowspan="2">Ay</th>' + ys.map(function (y, i) { return '<th colspan="' + (nb + 1) + '">' + esc(yLabel(i)) + '</th>'; }).join('') + '</tr><tr>' +
-      ys.map(function () { return BR.map(function (b) { return '<th>' + b.n + '</th>'; }).join('') + '<th>Toplam</th>'; }).join('') + '</tr></thead><tbody>';
+    var h = '<table class="rt ms"><thead><tr><th class="l" rowspan="2">Ay</th>' + ys.map(function (y, i) { return '<th class="g' + gOf(i) + ' gh" colspan="' + (nb + 1) + '">' + esc(yLabel(i)) + '</th>'; }).join('') + '</tr><tr>' +
+      ys.map(function (y, i) { return BR.map(function (b) { return '<th class="g' + gOf(i) + '">' + b.n + '</th>'; }).join('') + '<th class="g' + gOf(i) + '">Toplam</th>'; }).join('') + '</tr></thead><tbody>';
     MONTHS.forEach(function (m, mi) {
       h += '<tr><td class="l">' + m + '</td>';
-      ys.forEach(function (y) {
+      ys.forEach(function (y, yi) {
         var vs = BR.map(function (b, bi) { return mVal(row.rec[bi], y, mi, b); });
-        vs.forEach(function (v) { h += '<td class="num">' + (v == null ? '<span class="na">–</span>' : fmt(v)) + '</td>'; });
+        vs.forEach(function (v) { h += '<td class="num g' + gOf(yi) + '">' + (v == null ? '<span class="na">–</span>' : fmt(v)) + '</td>'; });
         var ok = vs.filter(function (v) { return v != null; });
-        h += '<td class="num"><b>' + (ok.length ? fmt(sum(ok)) : '<span class="na">–</span>') + '</b></td>';
+        h += '<td class="num g' + gOf(yi) + '"><b>' + (ok.length ? fmt(sum(ok)) : '<span class="na">–</span>') + '</b></td>';
       });
       h += '</tr>';
     });
     h += '</tbody><tfoot><tr><td class="l">Toplam</td>';
     ys.forEach(function (y, i) {
-      BR.forEach(function (b, bi) { h += '<td class="num">' + nn(row.rec[bi] ? ySum(row.rec[bi], y) : null) + '</td>'; });
+      BR.forEach(function (b, bi) { h += '<td class="num g' + gOf(i) + '">' + nn(row.rec[bi] ? ySum(row.rec[bi], y) : null) + '</td>'; });
       var ok = BR.map(function (b, bi) { return row.rec[bi] ? ySum(row.rec[bi], y) : null; }).filter(function (v) { return v != null; });
-      h += '<td class="num">' + (ok.length ? fmt(sum(ok)) : '–') + '</td>';
+      h += '<td class="num g' + gOf(i) + '">' + (ok.length ? fmt(sum(ok)) : '–') + '</td>';
     });
     return h + '</tr></tfoot></table>';
   }
@@ -1834,8 +1870,8 @@ table.mx { width: 100%; min-width: 0; }
   function analizDetailHtml(d) {
     var sp = !!ds.stats.split, ms = detailModels(d), ys = SY(), row = mkRow(d);
     var f = sum(ms.map(function (r) { return r.f; })), k = sum(ms.map(function (r) { return r.k; })), t = sum(ms.map(function (r) { return r.t; }));
-    var h = '<div class="rdet"><div class="rhead"><div class="rkick">Bayi Karnesi · Bayi Stok Analizi</div><h2>' + esc(d.n) + '</h2><div class="rsub">' + esc(d.s) + ' · ' + esc(d.c) + ' · ' + esc(d.pk) + ' · ' + esc(d.pl) + '</div></div>' + summaryHtml(summaryGroups([row], false));
-    h += '<h3 class="rh3">Model detayları</h3>';
+    var h = '<div class="rdet"><div class="rhead"><div class="rkick">Bayi Karnesi · Bayi Stok Analizi</div><h2>' + esc(d.n) + '</h2><div class="rsub">' + esc(d.s) + ' · ' + esc(d.c) + ' · ' + esc(d.pk) + ' · ' + esc(d.pl) + '</div></div>' + summaryHtml(summaryBoxes([row]));
+    h += '<div class="rcols"><div><h3 class="rh3">Model detayları</h3>';
     if (!ms.length) h += '<div class="panel empty">Bu bayide stok yok.</div>';
     else {
       h += '<div class="panel"><div class="rwrap"><table class="rt md"><thead><tr><th class="l">Marka</th><th class="l">Model</th>' + (sp ? '<th>Faturalı</th><th>Konsinye</th>' : '') + '<th>Toplam</th></tr></thead><tbody>';
@@ -1844,7 +1880,7 @@ table.mx { width: 100%; min-width: 0; }
     }
     var mn = missingNames(d);
     if (mn.length) h += '<div class="rnote"><b>Stokta olmayan modeller (' + mn.length + '):</b> ' + esc(mn.join(', ')) + '</div>';
-    h += '<h3 class="rh3">Aylık satış adedi (Bajaj ve Kanuni)</h3><div class="panel"><div class="rwrap">' + monthTable(row) + '</div></div>' + salesMissNote(row);
+    h += '</div><div><h3 class="rh3">Aylık satış adedi (Bajaj ve Kanuni)</h3><div class="panel"><div class="rwrap">' + monthTable(row) + '</div></div></div></div>' + salesMissNote(row);
     var a = salesAsOf();
     if (a) h += '<div class="rnote">' + esc(ys[ys.length - 1]) + ' yılı tamamlanmadı: satışlar ' + esc(trDate(a)) + ' rapor tarihine kadardır.</div>';
     return h + '</div>';
@@ -1863,7 +1899,7 @@ table.mx { width: 100%; min-width: 0; }
     if (S.aDealer && !d) S.aDealer = null;
     if (d) { $('analizBody').innerHTML = analizToolbar(d, 1) + salesNote() + analizDetailHtml(d); return; }
     var rows = analizRows();
-    $('analizBody').innerHTML = analizToolbar(null, rows.length) + '<div class="rintro"><b>Bayi Karnesi</b> · Bayi Stok Analizi<br><span>Stok ve satış adedi: Bajaj ve Kanuni ayrı ayrı. Bayi adına dokunun: model detayı ve aylık satışlar açılır.</span></div>' + salesNote() + summaryHtml(summaryGroups(rows, true)) + analizListHtml(rows);
+    $('analizBody').innerHTML = analizToolbar(null, rows.length) + '<div class="rintro"><b>Bayi Karnesi</b> · Bayi Stok Analizi<br><span>' + fmt(rows.length) + ' bayi · Stok ve satış adedi: Bajaj ve Kanuni ayrı ayrı, toplam birlikte. Bayi adına dokunun: model detayı ve aylık satışlar açılır. Bayi adı aratıp çıktı alırsanız model detayları çıktıya otomatik eklenir.</span></div>' + salesNote() + summaryHtml(summaryBoxes(rows)) + analizListHtml(rows);
   }
 
   /* ----- PDF ----- */
@@ -1880,8 +1916,8 @@ table.mx { width: 100%; min-width: 0; }
     if (!pdfLoading) pdfLoading = loadScript(JSPDF_URL).then(function () { return loadScript(ATBL_URL); }).catch(function (e) { pdfLoading = null; throw e; });
     return pdfLoading;
   }
-  function pdfNew() {
-    var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+  function pdfNew(o) {
+    var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: o === 'l' ? 'landscape' : 'portrait', compress: true });
     doc.addFileToVFS('Inter-Regular.ttf', INTER_REG); doc.addFont('Inter-Regular.ttf', 'Inter', 'normal');
     doc.addFileToVFS('Inter-Bold.ttf', INTER_BOLD); doc.addFont('Inter-Bold.ttf', 'Inter', 'bold');
     doc.setFont('Inter', 'normal');
@@ -1889,22 +1925,23 @@ table.mx { width: 100%; min-width: 0; }
   }
   function tc(doc, c) { doc.setTextColor(c[0], c[1], c[2]); }
   function pdfChrome(doc, title) {
-    var n = doc.getNumberOfPages(), W = 210;
+    var n = doc.getNumberOfPages();
     for (var i = 1; i <= n; i++) {
       doc.setPage(i);
+      var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
       doc.setFillColor(HDR[0], HDR[1], HDR[2]); doc.rect(0, 0, W, 16, 'F');
       doc.setFont('Inter', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255); doc.text('ORACLE BAYİ STOK RAPORU', 14, 10.4);
       doc.setFont('Inter', 'normal'); doc.setFontSize(9); doc.text(title, W - 14, 10.4, { align: 'right' });
-      doc.setDrawColor(LINEC[0], LINEC[1], LINEC[2]); doc.setLineWidth(.25); doc.line(14, 284, W - 14, 284);
+      doc.setDrawColor(LINEC[0], LINEC[1], LINEC[2]); doc.setLineWidth(.25); doc.line(14, H - 13, W - 14, H - 13);
       doc.setFontSize(8); tc(doc, GREY);
-      doc.text('Güncel veri girişi: ' + dataStamp(ds.asOf) + (salesAsOf() ? ' · Satış raporu tarihi: ' + trDate(salesAsOf()) : ''), 14, 289);
-      doc.text('Sayfa ' + i + ' / ' + n, W - 14, 289, { align: 'right' });
+      doc.text('Güncel veri girişi: ' + dataStamp(ds.asOf) + (salesAsOf() ? ' · Satış raporu tarihi: ' + trDate(salesAsOf()) : ''), 14, H - 8);
+      doc.text('Sayfa ' + i + ' / ' + n, W - 14, H - 8, { align: 'right' });
     }
   }
   function pdfHead(doc, y, title, lines) {
     doc.setFont('Inter', 'bold'); doc.setFontSize(16); tc(doc, NAVY); doc.text(title, 14, y); y += 6.5;
     doc.setFont('Inter', 'normal'); doc.setFontSize(9.5); tc(doc, GREY);
-    lines.forEach(function (l) { var ls = doc.splitTextToSize(l, 182); doc.text(ls, 14, y); y += ls.length * 4.4; });
+    lines.forEach(function (l) { var ls = doc.splitTextToSize(l, doc.internal.pageSize.getWidth() - 28); doc.text(ls, 14, y); y += ls.length * 4.4; });
     return y + 3;
   }
   function pdfKpis(doc, y, items) {
@@ -1920,7 +1957,7 @@ table.mx { width: 100%; min-width: 0; }
     return y + h + 6;
   }
   function pdfH(doc, y, text) {
-    if (y > 252) { doc.addPage(); y = 24; }
+    if (y > doc.internal.pageSize.getHeight() - 45) { doc.addPage(); y = 24; }
     doc.setFont('Inter', 'bold'); doc.setFontSize(11); tc(doc, NAVY); doc.text(text, 14, y);
     return y + 3;
   }
@@ -1967,89 +2004,128 @@ table.mx { width: 100%; min-width: 0; }
     return doc;
   }
 
-  function pdfSummary(doc, y, groups) {
-    groups.forEach(function (g) {
-      doc.setFont('Inter', 'bold'); doc.setFontSize(8.5); tc(doc, NAVY); doc.text(g.t, 14, y); y += 2;
-      y = pdfKpis(doc, y, g.items) - 1.5;
+  var GC = { 1: [18, 66, 122], 2: [15, 118, 110], 3: [180, 83, 9] };
+  var GT = { 1: [236, 242, 250], 2: [231, 245, 243], 3: [253, 242, 228] };
+  function pdfBoxes(doc, y, boxes) {
+    var W = doc.internal.pageSize.getWidth(), n = boxes.length, gap = 3, w = (W - 28 - gap * (n - 1)) / n, h = 22;
+    boxes.forEach(function (bx, i) {
+      var x = 14 + i * (w + gap), c = GC[bx.g];
+      doc.setFillColor(GT[bx.g][0], GT[bx.g][1], GT[bx.g][2]); doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(.3); doc.roundedRect(x, y, w, h, 1.5, 1.5, 'FD');
+      doc.setFillColor(c[0], c[1], c[2]); doc.rect(x + .3, y, w - .6, 1.2, 'F');
+      doc.setFont('Inter', 'bold'); doc.setFontSize(8); doc.setTextColor(c[0], c[1], c[2]); doc.text(bx.t, x + 3, y + 5.2);
+      bx.r.forEach(function (l, j) {
+        var yy = y + 9.4 + j * 4.2;
+        if (l[2]) { doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(.2); doc.line(x + 3, yy - 3, x + w - 3, yy - 3); }
+        doc.setFont('Inter', l[2] ? 'bold' : 'normal'); doc.setFontSize(8); tc(doc, l[2] ? INK : GREY); doc.text(l[0], x + 3, yy);
+        doc.setFont('Inter', 'bold'); tc(doc, INK); doc.text(String(l[1]), x + w - 3, yy, { align: 'right' });
+      });
     });
-    return y + 2;
+    return y + h + 4;
   }
+  function gHead(txt, g, extra) { return Object.assign({ content: txt, styles: { fillColor: GC[g], textColor: [255, 255, 255], halign: 'center' } }, extra || {}); }
+  function gCell(txt, g, bold) { return { content: txt, styles: { fillColor: GT[g], fontStyle: bold ? 'bold' : 'normal', halign: 'center' } }; }
+
   function pdfDealerPage(doc, d, first) {
     if (!first) doc.addPage();
-    var sp = !!ds.stats.split, ms = detailModels(d), ys = SY(), row = mkRow(d), nb = BR.length;
+    var sp = !!ds.stats.split, ms = detailModels(d), ys = SY(), row = mkRow(d), nb = BR.length, W = doc.internal.pageSize.getWidth();
     var f = sum(ms.map(function (r) { return r.f; })), k = sum(ms.map(function (r) { return r.k; })), t = sum(ms.map(function (r) { return r.t; }));
     var y = 24;
-    doc.setFont('Inter', 'bold'); doc.setFontSize(9.5); tc(doc, GREY); doc.text('BAYİ KARNESİ · BAYİ STOK ANALİZİ', 14, y); y += 6;
-    doc.setFontSize(15); tc(doc, NAVY); var nm = doc.splitTextToSize(d.n, 182); doc.text(nm, 14, y); y += nm.length * 6;
-    doc.setFont('Inter', 'normal'); doc.setFontSize(9); tc(doc, GREY); doc.text(d.s + ' · ' + d.c + ' · ' + d.pk + ' · ' + d.pl, 14, y); y += 7.5;
-    y = pdfSummary(doc, y, summaryGroups([row], false));
-    y = pdfH(doc, y, 'Model detayları');
-    if (!ms.length) { doc.setFont('Inter', 'normal'); doc.setFontSize(10); tc(doc, GREY); doc.text('Bu bayide stok yok.', 14, y + 6); y += 12; }
+    doc.setFont('Inter', 'bold'); doc.setFontSize(8.5); tc(doc, GREY); doc.text('BAYİ KARNESİ · BAYİ STOK ANALİZİ', 14, y); y += 5.5;
+    doc.setFontSize(14); tc(doc, NAVY); doc.text(d.n, 14, y);
+    doc.setFont('Inter', 'normal'); doc.setFontSize(9); tc(doc, GREY); doc.text(d.s + ' · ' + d.c + ' · ' + d.pk + ' · ' + d.pl, W - 14, y, { align: 'right' }); y += 5;
+    y = pdfBoxes(doc, y, summaryBoxes([row]));
+    var top = y;
+    /* sol: model detayları */
+    var wl = 122, y1 = pdfH(doc, top + 2, 'Model detayları');
+    if (!ms.length) { doc.setFont('Inter', 'normal'); doc.setFontSize(10); tc(doc, GREY); doc.text('Bu bayide stok yok.', 14, y1 + 6); y1 += 12; }
     else {
       var body = ms.map(function (r) { return [bname(ds.models[r.i].b), { content: ds.models[r.i].n, styles: { fontStyle: 'bold', halign: 'left' } }].concat(sp ? [fmt(r.f), fmt(r.k)] : []).concat([{ content: fmt(r.t), styles: { fontStyle: 'bold' } }]); });
-      var cs = { 0: { cellWidth: 26, halign: 'left' }, 1: { halign: 'left' } };
-      for (var c = 2; c < (sp ? 5 : 3); c++) cs[c] = { cellWidth: 26, halign: 'center' };
-      y = pdfTable(doc, y, { head: ['Marka', 'Model'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(['Toplam']), body: body, foot: ['Genel toplam', ''].concat(sp ? [fmt(f), fmt(k)] : []).concat([fmt(t)]), cs: cs, fs: 7.8, cp: 0.95 });
+      var cs = { 0: { cellWidth: 20, halign: 'left' }, 1: { halign: 'left' } };
+      for (var c = 2; c < (sp ? 5 : 3); c++) cs[c] = { cellWidth: 19, halign: 'center' };
+      doc.autoTable({
+        startY: y1, head: [['Marka', 'Model'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(['Toplam'])], body: body,
+        foot: [['Genel toplam', ''].concat(sp ? [fmt(f), fmt(k)] : []).concat([fmt(t)]).map(function (x, i) { return { content: x, styles: { halign: i < 2 ? 'left' : 'center' } }; })], showFoot: 'lastPage', theme: 'grid',
+        margin: { top: 22, bottom: 14, left: 14, right: W - 14 - wl }, tableWidth: wl, rowPageBreak: 'avoid',
+        styles: { font: 'Inter', fontSize: 7.8, cellPadding: 0.95, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle' },
+        headStyles: { fillColor: GC[1], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [247, 248, 250] }, columnStyles: cs
+      });
+      y1 = doc.lastAutoTable.finalY + 4;
     }
     var mn = missingNames(d);
     if (mn.length) {
-      doc.setFont('Inter', 'bold'); doc.setFontSize(8); tc(doc, INK);
-      var ls = doc.splitTextToSize('Stokta olmayan modeller (' + mn.length + '): ' + mn.join(', '), 182);
-      if (y + ls.length * 3.6 > 270) { doc.addPage(); y = 24; }
-      doc.text(ls, 14, y - 2); y += ls.length * 3.6 + 1;
+      doc.setFont('Inter', 'bold'); doc.setFontSize(7.5); tc(doc, INK);
+      var ls = doc.splitTextToSize('Stokta olmayan modeller (' + mn.length + '): ' + mn.join(', '), wl);
+      if (y1 + ls.length * 3.4 < 200) doc.text(ls, 14, y1 + 1);
     }
-    y = pdfH(doc, y, 'Aylık satış adedi (Bajaj ve Kanuni)');
-    var heads = [[{ content: 'Ay', rowSpan: 2 }].concat(ys.map(function (yy, i) { return { content: yLabel(i), colSpan: nb + 1 }; })),
-      [].concat.apply([], ys.map(function () { return BR.map(function (b) { return b.n; }).concat(['Toplam']); }))];
+    /* sağ: aylık satış */
+    var xr = 14 + wl + 6, wr = W - 14 - xr;
+    doc.setFont('Inter', 'bold'); doc.setFontSize(11); tc(doc, NAVY); doc.text('Aylık satış adedi (Bajaj ve Kanuni)', xr, top + 2 + 0);
+    var heads = [[gHead('Ay', 1, { rowSpan: 2, styles: { fillColor: HDR, textColor: [255, 255, 255], halign: 'center' } })].concat(ys.map(function (yy, i) { return gHead(yLabel(i), gOf(i), { colSpan: nb + 1 }); })),
+      [].concat.apply([], ys.map(function (yy, i) { return BR.map(function (b) { return gHead(b.n, gOf(i)); }).concat([gHead('Toplam', gOf(i))]); }))];
     var mb = MONTHS.map(function (m, mi) {
       var line = [{ content: m, styles: { halign: 'left' } }];
-      ys.forEach(function (yy) {
+      ys.forEach(function (yy, yi) {
         var vs = BR.map(function (b, bi) { return mVal(row.rec[bi], yy, mi, b); }), ok = vs.filter(function (v) { return v != null; });
-        vs.forEach(function (v) { line.push(nn(v)); });
-        line.push({ content: ok.length ? fmt(sum(ok)) : '–', styles: { fontStyle: 'bold' } });
+        vs.forEach(function (v) { line.push(gCell(nn(v), gOf(yi))); });
+        line.push(gCell(ok.length ? fmt(sum(ok)) : '–', gOf(yi), true));
       });
       return line;
     });
-    var ft = ['Toplam'];
-    ys.forEach(function (yy) {
+    var ft = [{ content: 'Toplam', styles: { halign: 'left' } }];
+    ys.forEach(function (yy, yi) {
       var vs = BR.map(function (b, bi) { return row.rec[bi] ? ySum(row.rec[bi], yy) : null; }), ok = vs.filter(function (v) { return v != null; });
-      vs.forEach(function (v) { ft.push(nn(v)); }); ft.push(ok.length ? fmt(sum(ok)) : '–');
+      vs.forEach(function (v) { ft.push({ content: nn(v), styles: { halign: 'center' } }); }); ft.push({ content: ok.length ? fmt(sum(ok)) : '–', styles: { halign: 'center' } });
     });
-    y = pdfTable(doc, y, { heads: heads, body: mb, foot: ft, cs: { 0: { cellWidth: 26, halign: 'left' } }, fs: 7.8, cp: 0.95 });
+    doc.autoTable({
+      startY: top + 5, head: heads, body: mb, foot: [ft], showFoot: 'lastPage', theme: 'grid',
+      margin: { top: 22, bottom: 14, left: xr, right: 14 }, tableWidth: wr, rowPageBreak: 'avoid',
+      styles: { font: 'Inter', fontSize: 7.8, cellPadding: 0.95, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle' },
+      headStyles: { fontStyle: 'bold', halign: 'center' }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 20, halign: 'left' } }
+    });
+    var y2 = doc.lastAutoTable.finalY + 3.5;
     var note = salesAsOf() ? ys[ys.length - 1] + ' yılı tamamlanmadı: satışlar ' + trDate(salesAsOf()) + ' rapor tarihine kadardır.' : '';
     var miss = BR.filter(function (b, bi) { return SRC(b) && !row.rec[bi]; }).map(function (b) { return b.n; });
     if (miss.length) note += (note ? ' ' : '') + 'Satış dosyasında ' + miss.join(' ve ') + ' satış kaydı yok (“–”).';
-    if (note) { doc.setFont('Inter', 'normal'); doc.setFontSize(7.5); tc(doc, GREY); if (y > 278) { doc.addPage(); y = 24; } doc.text(doc.splitTextToSize(note, 182), 14, y - 3); }
+    if (note) { doc.setFont('Inter', 'normal'); doc.setFontSize(7); tc(doc, GREY); doc.text(doc.splitTextToSize(note, wr), xr, y2); }
   }
   function pdfAnalizList(rows) {
-    var doc = pdfNew(), sp = !!ds.stats.split, ys = SY();
-    var lines = [pkTxt() + (S.aq ? ' · Arama: “' + S.aq + '”' : '') + ' · ' + rows.length + ' bayi', 'Stok ve satış adedi: Bajaj ve Kanuni ayrı ayrı.'];
+    var doc = pdfNew('l'), sp = !!ds.stats.split, ys = SY(), nb = BR.length, W = doc.internal.pageSize.getWidth();
+    var lines = [pkTxt() + (S.aq ? ' · Arama: “' + S.aq + '”' : '') + ' · ' + rows.length + ' bayi · Stok ve satış adedi: Bajaj ve Kanuni ayrı ayrı, toplam birlikte'];
     var y = pdfHead(doc, 25, 'Bayi Karnesi · Bayi Stok Analizi', lines);
-    y = pdfSummary(doc, y, summaryGroups(rows, true));
-    var heads = [[{ content: 'Bayi', rowSpan: 2 }, { content: 'Stok', colSpan: 3 + (sp ? 2 : 0) }].concat(ys.map(function (yy, i) { return { content: yLabel(i), colSpan: BR.length }; })),
-      ['Bajaj', 'Kanuni', 'Toplam'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat([].concat.apply([], ys.map(function () { return BR.map(function (b) { return b.n; }); })))];
+    y = pdfBoxes(doc, y, summaryBoxes(rows));
+    var heads = [[{ content: 'Bayi', rowSpan: 2, styles: { fillColor: HDR, textColor: [255, 255, 255], halign: 'center' } }, gHead('Stok', 1, { colSpan: 3 + (sp ? 2 : 0) })].concat(ys.map(function (yy, i) { return gHead(yLabel(i), gOf(i), { colSpan: nb + 1 }); })),
+      ['Bajaj', 'Kanuni', 'Toplam'].concat(sp ? ['Faturalı', 'Konsinye'] : []).map(function (x) { return gHead(x, 1); }).concat([].concat.apply([], ys.map(function (yy, i) { return BR.map(function (b) { return gHead(b.n, gOf(i)); }).concat([gHead('Toplam', gOf(i))]); })))];
     var body = rows.map(function (r) {
-      var line = [{ content: r.d.n + ', ' + r.d.s + ', ' + r.d.pl, styles: { halign: 'left' } }, fmt(r.sb), fmt(r.sk), { content: fmt(r.t), styles: { fontStyle: 'bold' } }].concat(sp ? [fmt(r.f), fmt(r.k)] : []);
-      ys.forEach(function (yy, i) { BR.forEach(function (b, bi) { line.push({ content: nn(r[sKey(bi, i)]), styles: { fontStyle: 'bold' } }); }); });
+      var line = [{ content: r.d.n + ', ' + r.d.s + ', ' + r.d.pl, styles: { halign: 'left' } }, gCell(fmt(r.sb), 1), gCell(fmt(r.sk), 1), gCell(fmt(r.t), 1, true)].concat(sp ? [gCell(fmt(r.f), 1), gCell(fmt(r.k), 1)] : []);
+      ys.forEach(function (yy, i) { BR.forEach(function (b, bi) { line.push(gCell(nn(r[sKey(bi, i)]), gOf(i))); }); line.push(gCell(nn(r['st' + i]), gOf(i), true)); });
       return line;
     });
-    var ft = ['Genel toplam (' + rows.length + ' bayi)', fmt(sum(rows.map(function (r) { return r.sb; }))), fmt(sum(rows.map(function (r) { return r.sk; }))), fmt(sum(rows.map(function (r) { return r.t; })))].concat(sp ? [fmt(sum(rows.map(function (r) { return r.f; }))), fmt(sum(rows.map(function (r) { return r.k; })))] : []);
-    ys.forEach(function (yy, i) { BR.forEach(function (b, bi) { ft.push(nn(sSum(rows, bi, i))); }); });
+    var ft = [{ content: 'Genel toplam (' + rows.length + ' bayi)', styles: { halign: 'left' } }].concat([fmt(sum(rows.map(function (r) { return r.sb; }))), fmt(sum(rows.map(function (r) { return r.sk; }))), fmt(sum(rows.map(function (r) { return r.t; })))].concat(sp ? [fmt(sum(rows.map(function (r) { return r.f; }))), fmt(sum(rows.map(function (r) { return r.k; })))] : []));
+    ys.forEach(function (yy, i) { BR.forEach(function (b, bi) { ft.push(nn(sSum(rows, bi, i))); }); ft.push(nn(sAll(rows, i))); });
+    ft = ft.map(function (c, i) { return typeof c === 'object' ? c : { content: c, styles: { halign: 'center' } }; });
     var cs = { 0: { halign: 'left' } };
-    for (var ci = 1; ci < ft.length; ci++) cs[ci] = { cellWidth: 13.2, halign: 'center' };
+    for (var ci = 1; ci < ft.length; ci++) cs[ci] = { cellWidth: 15.2, halign: 'center' };
     if (!rows.length) { doc.setFont('Inter', 'normal'); doc.setFontSize(11); tc(doc, GREY); doc.text('Bu filtreyle listelenecek bayi yok.', 14, y + 6); }
-    else pdfTable(doc, y, { heads: heads, body: body, foot: ft, cs: cs, fs: 7, cp: 0.9 });
+    else doc.autoTable({
+      startY: y, head: heads, body: body, foot: [ft], showFoot: 'lastPage', theme: 'grid', margin: { top: 22, bottom: 14, left: 14, right: 14 }, rowPageBreak: 'avoid',
+      styles: { font: 'Inter', fontSize: 7.2, cellPadding: 0.7, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle', overflow: 'linebreak' },
+      headStyles: { fontStyle: 'bold', halign: 'center' }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' }, columnStyles: cs
+    });
+    /* Bayi adı aratıldıysa: seçilen bayilerin model detayları ve aylık satışları da çıktıya eklenir */
+    if (S.aq && rows.length) rows.forEach(function (r) { pdfDealerPage(doc, r.d, false); });
     pdfChrome(doc, 'Bayi Karnesi');
     return doc;
   }
   function pdfAnalizEach(rows) {
-    var doc = pdfNew();
+    var doc = pdfNew('l');
     rows.forEach(function (r, i) { pdfDealerPage(doc, r.d, i === 0); });
     if (!rows.length) { doc.setFontSize(11); doc.text('Bu filtreyle listelenecek bayi yok.', 14, 30); }
     pdfChrome(doc, 'Bayi Karnesi');
     return doc;
   }
-  function pdfAnalizDealer(d) { var doc = pdfNew(); pdfDealerPage(doc, d, true); pdfChrome(doc, 'Bayi Karnesi'); return doc; }
+  function pdfAnalizDealer(d) { var doc = pdfNew('l'); pdfDealerPage(doc, d, true); pdfChrome(doc, 'Bayi Karnesi'); return doc; }
 
   /* ----- Excel ----- */
   function widths(ws, arr) { arr.forEach(function (w, i) { ws.getColumn(i + 1).width = w; }); }
@@ -2151,15 +2227,21 @@ table.mx { width: 100%; min-width: 0; }
       ws.addRow(line);
     });
     widths(ws, [12, 32, 14].concat(hd.slice(3).map(function () { return 14; }))); ws.views = [{ state: 'frozen', ySplit: 1, xSplit: 3 }];
-    return polish(wb);
+    polish(wb);
+    /* sütun gruplarını başlıkta renklendir: stok mavi, ilk yıl satış yeşil, son yıl satış turuncu */
+    var gcol = { 2: 'FF0F766E', 3: 'FFB45309' }, base = 7 + (sp ? 2 : 0);
+    ys.forEach(function (y, i) {
+      for (var c = base + 1 + i * (BR.length + 1); c <= base + (i + 1) * (BR.length + 1); c++) wl.getCell(1, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: gcol[gOf(i)] } };
+    });
+    return wb;
   }
 
   /* ----- HTML ----- */
-  function pageHtml(title, info, body) {
+  function pageHtml(title, info, body, landscape) {
     var css = Array.prototype.map.call(document.querySelectorAll('style'), function (s) { return s.textContent; }).join('\n');
     var when = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
     return '<!doctype html>\n<html lang="tr">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<title>' + esc(title) + ' · ORACLE BAYİ STOK RAPORU</title>\n<style>' + css +
-      '\n[hidden]{display:none!important}body{margin:0}</style>\n</head>\n<body>\n<div class="wrap">\n<div class="top"><div><h1>' +
+      '\n[hidden]{display:none!important}body{margin:0}' + (landscape ? '@page{size:A4 landscape;margin:0}' : '') + '</style>\n</head>\n<body>\n<div class="wrap">\n<div class="top"><div><h1>' +
       esc(title) + '</h1><div class="sub">' + esc(info) + ' · ORACLE BAYİ STOK RAPORU · Güncel veri girişi: ' + esc(dataStamp(ds.asOf)) + ' · İndirilme: ' + esc(when) + '</div></div></div>\n' + body + '\n</div>\n' + PRINT_JS + '\n</body>\n</html>\n';
   }
   function durumSnapshot(sub) {
@@ -2172,9 +2254,12 @@ table.mx { width: 100%; min-width: 0; }
   function analizSnapshot(d) {
     var keep = STATIC; STATIC = true;
     try {
-      if (d) return pageHtml('Bayi Karnesi · ' + d.n, 'Bayi Stok Analizi · ' + d.s + ' · ' + d.pl, salesNote() + analizDetailHtml(d));
+      if (d) return pageHtml('Bayi Karnesi · ' + d.n, 'Bayi Stok Analizi · ' + d.s + ' · ' + d.pl, salesNote() + analizDetailHtml(d), true);
       var rows = analizRows();
-      return pageHtml('Bayi Karnesi · Bayi Stok Analizi', pkTxt() + (S.aq ? ' · Arama: ' + S.aq : ''), salesNote() + summaryHtml(summaryGroups(rows, true)) + analizListHtml(rows));
+      var body = salesNote() + summaryHtml(summaryBoxes(rows)) + analizListHtml(rows);
+      /* Bayi adı aratıldıysa: eşleşen her bayinin model detayları ve aylık satışları da eklenir */
+      if (S.aq && rows.length) body += rows.map(function (r) { return '<div class="pgbrk">' + analizDetailHtml(r.d) + '</div>'; }).join('');
+      return pageHtml('Bayi Karnesi · Bayi Stok Analizi', pkTxt() + (S.aq ? ' · Arama: ' + S.aq : ''), body, true);
     } finally { STATIC = keep; }
   }
 
