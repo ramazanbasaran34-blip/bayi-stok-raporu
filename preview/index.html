@@ -461,6 +461,12 @@ table.mx { width: 100%; min-width: 0; }
         <button class="btn primary" id="btnDurum" type="button">Excel olarak indir</button>
       </div>
     </div>
+    <div class="filters">
+      <div class="field grow">
+        <label for="selDealer">Bayi seç (liste için)</label>
+        <select id="selDealer"></select>
+      </div>
+    </div>
     <div id="durumBody"></div>
   </div>
 
@@ -765,7 +771,7 @@ table.mx { width: 100%; min-width: 0; }
   var ds = null, raw = null;
   var STANDALONE = true;
   var STATIC = false;
-  var S = { menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', aq: '', aDealer: null, brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' } } };
+  var S = { menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' } } };
   var $ = function (id) { return document.getElementById(id); };
   var norm = core.norm;
   var fmt = function (n) { return Number(n).toLocaleString('tr-TR'); };
@@ -1332,7 +1338,7 @@ table.mx { width: 100%; min-width: 0; }
   }
 
   function stamp() { var d = new Date(), pad = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-  function slug(s) { return String(s).toLowerCase().replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  function slug(s) { return String(s).toLocaleLowerCase('tr').replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function fileBase() {
     var v = curView();
     var nm = curRep() === 'stok' ? 'bayi-stoklari' : 'eksik-modeller';
@@ -1492,13 +1498,14 @@ table.mx { width: 100%; min-width: 0; }
     var mods = visModels(), out = [];
     ds.dealers.forEach(function (d) {
       if (S.pk !== 'ALL' && d.pk !== S.pk) return;
-      var o = { d: d, miss: [], f: [], k: [], fT: 0, kT: 0, tT: 0, list: [] };
+      if (S.dd !== 'ALL' && d.c !== S.dd) return;
+      var o = { d: d, miss: [], f: [], k: [], fT: 0, kT: 0, tT: 0, list: [], rows: [] };
       mods.forEach(function (i) {
         var f = d.d ? d.d[i] : 0, k = d.k ? d.k[i] : 0, tt = total(d, i);
         if (status(d, i) === 'miss') o.miss.push(i);
         if (f > 0) { o.f.push({ i: i, q: f }); o.fT += f; }
         if (k > 0) { o.k.push({ i: i, q: k }); o.kT += k; }
-        if (tt > 0) o.list.push({ i: i, q: tt });
+        if (tt > 0) { o.list.push({ i: i, q: tt }); o.rows.push({ i: i, f: f, k: k, t: tt }); }
         o.tT += tt;
       });
       out.push(o);
@@ -1512,14 +1519,23 @@ table.mx { width: 100%; min-width: 0; }
     if (!arr.length) return '<span class="na">Yok</span>';
     return arr.map(function (x) { return esc(ds.models[withQty ? x.i : x].n) + (withQty ? ' <b>(' + x.q + ')</b>' : ''); }).join(', ');
   }
-  function durumTitle(sub) { return sub === 'eksik' ? 'Stok Bulunmayanlar' : 'Bayi Stokları (Faturalı ve Konsinye)'; }
+  function durumTitle(sub) { return sub === 'eksik' ? 'Stok Bulunmayanlar' : 'Bayi Stokları'; }
+  function ddName() { var d = S.dd === 'ALL' ? null : dealerByCode(S.dd); return d ? d.n : ''; }
+  function durumRows(mods) { return visDealers(mods, true).filter(function (r) { return S.dd === 'ALL' || r.d.c === S.dd; }); }
+  function fillDealerSel() {
+    var sel = $('selDealer'), list = ds.dealers.filter(function (d) { return S.pk === 'ALL' || d.pk === S.pk; }).slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'tr'); });
+    if (S.dd !== 'ALL' && !list.some(function (d) { return d.c === S.dd; })) S.dd = 'ALL';
+    sel.innerHTML = '<option value="ALL">Tüm bayiler (' + list.length + ')</option>' + list.map(function (d) { return '<option value="' + esc(d.c) + '">' + esc(d.n + ' · ' + d.s) + '</option>'; }).join('');
+    sel.value = S.dd;
+  }
   function durumIntro(sub) {
-    return '<div class="rintro"><b>' + esc(durumTitle(sub)) + '</b> · ' + esc(brandTxt()) + ' · ' + esc(pkTxt()) + '<br><span>' +
-      (sub === 'eksik' ? 'Her bayide bayiye faturalı stokta da konsinyede de bulunmayan modeller.' : 'Her bayinin bayiye faturalı ve konsinye ürünleri ayrı ayrı, model ve adet olarak.') + '</span></div>';
+    return '<div class="rintro"><b>' + esc(durumTitle(sub)) + '</b> · ' + esc(brandTxt()) + ' · ' + esc(pkTxt()) + (ddName() ? ' · ' + esc(ddName()) : '') + '<br><span>' +
+      (sub === 'eksik' ? 'Her bayide bayiye faturalı stokta da konsinyede de bulunmayan modeller.' : 'Her bayinin toplam adedi. Bayiye dokunun: model detayı, bayiye faturalı ve konsinye adedi açılır.') + '</span></div>';
   }
   function durumHtml(sub) {
     var data = durumData(sub), sp = !!ds.stats.split;
     if (!data.length) return '<div class="panel empty">' + (sub === 'eksik' ? 'Eksik model bulunmuyor.' : 'Bu filtreyle bayi bulunamadı.') + '</div>';
+    if (sub === 'stok') return durumStokHtml(data, sp);
     var h = '<div class="panel"><div class="rwrap"><table class="rt dr ' + (sub === 'eksik' ? 'e' : 's') + '"><thead><tr><th class="l">Bayi</th>';
     if (sub === 'eksik') h += '<th>Eksik model sayısı</th><th class="l">Bayiye faturalı ve konsinyede olmayan modeller</th>';
     else if (sp) h += '<th class="l">Bayiye faturalı</th><th class="l">Konsinye</th>';
@@ -1540,8 +1556,27 @@ table.mx { width: 100%; min-width: 0; }
     else h += '<td class="num">' + fmt(sum(data.map(function (o) { return o.tT; }))) + '</td><td></td>';
     return h + '</tr></tfoot></table></div></div>';
   }
+  function durumStokHtml(data, sp) {
+    var one = ' one', h = '';
+    if (!STATIC) h += '<div class="stokbar"><span class="hint">Toplam = bayiye faturalı + konsinye adedi.</span><button class="btn" id="btnDOpen" type="button">' + (S.dopen ? 'Tümünü kapat' : 'Tümünü aç') + '</button></div>';
+    h += '<div class="sg head one"><span>Bayi</span><span class="n">Toplam adet</span></div>';
+    var cur = null, g = { f: 0, k: 0, t: 0 };
+    data.forEach(function (o) {
+      if (o.d.pk !== cur) { cur = o.d.pk; h += '<div class="grouph">' + esc(o.d.pk) + ' · ' + esc(o.d.pl) + '</div>'; }
+      g.f += o.fT; g.k += o.kT; g.t += o.tT;
+      var cls = sp ? 'sg' : 'sg one';
+      h += '<details class="sd"' + (S.dopen ? ' open' : '') + '><summary class="sg one"><span class="nm"><b>' + esc(o.d.n) + '</b><small>' + esc(o.d.s) + ' · ' + esc(o.d.c) + '</small></span><span class="n t">' + fmt(o.tT) + '</span></summary><div class="sdb">';
+      h += '<div class="' + cls + ' sh"><span>Model</span>' + (sp ? '<span class="n">Faturalı</span><span class="n">Konsinye</span>' : '') + '<span class="n">Toplam</span></div>';
+      if (!o.rows.length) h += '<div class="' + cls + '"><span>Stok yok</span></div>';
+      o.rows.forEach(function (r) { h += '<div class="' + cls + '"><span>' + esc(ds.models[r.i].n) + '</span>' + (sp ? '<span class="n">' + fmt(r.f) + '</span><span class="n">' + fmt(r.k) + '</span>' : '') + '<span class="n"><b>' + fmt(r.t) + '</b></span></div>'; });
+      h += '<div class="' + cls + ' tot"><span>Bayi toplamı</span>' + (sp ? '<span class="n">' + fmt(o.fT) + '</span><span class="n">' + fmt(o.kT) + '</span>' : '') + '<span class="n">' + fmt(o.tT) + '</span></div></div></details>';
+    });
+    h += '<div class="sg gt one"><span>Genel toplam (' + data.length + ' bayi)</span><span class="n">' + fmt(g.t) + '</span></div>';
+    return '<div class="list">' + h + '</div>';
+  }
   function renderDurum() {
-    var mods = visModels(), rows = visDealers(mods, true);
+    var mods = visModels(), rows = durumRows(mods);
+    fillDealerSel();
     $('kpis').innerHTML = S.dsub === 'eksik' ? renderKpis(mods, rows) : renderStokKpis(mods, rows);
     Array.prototype.forEach.call($('durumSub').children, function (b) { b.setAttribute('aria-pressed', b.dataset.sub === S.dsub ? 'true' : 'false'); });
     Array.prototype.forEach.call($('durumFmt').children, function (b) { b.setAttribute('aria-pressed', b.dataset.f === S.dfmt ? 'true' : 'false'); });
@@ -1719,24 +1754,28 @@ table.mx { width: 100%; min-width: 0; }
 
   function pdfDurum(sub) {
     var doc = pdfNew(), data = durumData(sub), sp = !!ds.stats.split;
-    var y = pdfHead(doc, 25, durumTitle(sub), [brandTxt() + ' · ' + pkTxt(), sub === 'eksik' ? 'Bayiye faturalı stokta da konsinyede de bulunmayan modeller.' : 'Bayiye faturalı ve konsinye ürünler ayrı ayrı (model ve adet).']);
+    var y = pdfHead(doc, 25, durumTitle(sub), [brandTxt() + ' · ' + pkTxt() + (ddName() ? ' · ' + ddName() : ''), sub === 'eksik' ? 'Bayiye faturalı stokta da konsinyede de bulunmayan modeller.' : 'Her bayinin toplam adedi ve model detayı (bayiye faturalı, konsinye).']);
     var items = sub === 'eksik'
       ? [{ v: fmt(data.length), l: 'Eksiği olan bayi' }, { v: fmt(sum(data.map(function (o) { return o.miss.length; }))), l: 'Toplam eksik model sayısı' }]
       : (sp ? [{ v: fmt(data.length), l: 'Bayi' }, { v: fmt(sum(data.map(function (o) { return o.fT; }))), l: 'Bayiye faturalı adet' }, { v: fmt(sum(data.map(function (o) { return o.kT; }))), l: 'Konsinye adet' }, { v: fmt(sum(data.map(function (o) { return o.tT; }))), l: 'Toplam adet' }]
         : [{ v: fmt(data.length), l: 'Bayi' }, { v: fmt(sum(data.map(function (o) { return o.tT; }))), l: 'Toplam adet' }]);
     y = pdfKpis(doc, y, items);
-    var body = [], cur = null, nc = 3;
+    var body = [], cur = null, nc = sub === 'eksik' ? 3 : (sp ? 4 : 2);
     data.forEach(function (o) {
       if (o.d.pk !== cur) { cur = o.d.pk; body.push(grpRow(nc, o.d.pk + ' · ' + o.d.pl)); }
       var nm = o.d.n + '\n' + o.d.s + ' · ' + o.d.c;
+      if (sub === 'stok') {
+        body.push([{ content: o.d.n + ' · ' + o.d.s + ' · ' + o.d.c + '   |   Toplam: ' + fmt(o.tT) + ' adet', colSpan: nc, styles: { fillColor: [238, 241, 246], fontStyle: 'bold', halign: 'left', textColor: INK } }]);
+        if (!o.rows.length) body.push([{ content: 'Stok yok', colSpan: nc, styles: { halign: 'left', textColor: GREY } }]);
+        o.rows.forEach(function (r) { body.push([{ content: ds.models[r.i].n, styles: { halign: 'left' } }].concat(sp ? [fmt(r.f), fmt(r.k)] : []).concat([{ content: fmt(r.t), styles: { fontStyle: 'bold' } }])); });
+        return;
+      }
       if (sub === 'eksik') body.push([nm, { content: String(o.miss.length), styles: { halign: 'center', fontStyle: 'bold' } }, modTxt(o.miss, false)]);
-      else if (sp) body.push([nm, fmt(o.fT) + ' adet\n' + (o.f.length ? modTxt(o.f, true) : 'Yok'), fmt(o.kT) + ' adet\n' + (o.k.length ? modTxt(o.k, true) : 'Yok')]);
-      else body.push([nm, { content: fmt(o.tT), styles: { halign: 'center', fontStyle: 'bold' } }, modTxt(o.list, true)]);
     });
     var head, foot, cs;
     if (sub === 'eksik') { head = ['Bayi', 'Eksik model sayısı', 'Bayiye faturalı ve konsinyede olmayan modeller']; foot = ['Toplam (' + data.length + ' bayi)', { content: fmt(sum(data.map(function (o) { return o.miss.length; }))), styles: { halign: 'center' } }, '']; cs = { 0: { cellWidth: 62 }, 1: { cellWidth: 22 } }; }
-    else if (sp) { head = ['Bayi', 'Bayiye faturalı', 'Konsinye']; foot = ['Toplam (' + data.length + ' bayi)', fmt(sum(data.map(function (o) { return o.fT; }))) + ' adet', fmt(sum(data.map(function (o) { return o.kT; }))) + ' adet']; cs = { 0: { cellWidth: 50 } }; }
-    else { head = ['Bayi', 'Toplam adet', 'Modeller']; foot = ['Toplam (' + data.length + ' bayi)', { content: fmt(sum(data.map(function (o) { return o.tT; }))), styles: { halign: 'center' } }, '']; cs = { 0: { cellWidth: 56 }, 1: { cellWidth: 22 } }; }
+    else if (sp) { head = ['Model', 'Faturalı', 'Konsinye', 'Toplam']; foot = ['Genel toplam (' + data.length + ' bayi)', fmt(sum(data.map(function (o) { return o.fT; }))), fmt(sum(data.map(function (o) { return o.kT; }))), fmt(sum(data.map(function (o) { return o.tT; })))]; cs = { 0: { halign: 'left' }, 1: { cellWidth: 30, halign: 'center' }, 2: { cellWidth: 30, halign: 'center' }, 3: { cellWidth: 30, halign: 'center' } }; }
+    else { head = ['Model', 'Toplam']; foot = ['Genel toplam (' + data.length + ' bayi)', fmt(sum(data.map(function (o) { return o.tT; })))]; cs = { 0: { halign: 'left' }, 1: { cellWidth: 40, halign: 'center' } }; }
     if (!data.length) { doc.setFont('Inter', 'normal'); doc.setFontSize(11); tc(doc, GREY); doc.text('Bu filtreyle listelenecek bayi yok.', 14, y + 6); }
     else pdfTable(doc, y, { head: head, body: body, foot: foot, cs: cs });
     pdfChrome(doc, durumTitle(sub));
@@ -1892,7 +1931,7 @@ table.mx { width: 100%; min-width: 0; }
       esc(title) + '</h1><div class="sub">' + esc(info) + ' · ORACLE BAYİ STOK RAPORU · Güncel veri girişi: ' + esc(dataStamp(ds.asOf)) + ' · İndirilme: ' + esc(when) + '</div></div></div>\n' + body + '\n</div>\n</body>\n</html>\n';
   }
   function durumSnapshot(sub) {
-    var mods = visModels(), rows = visDealers(mods, true), keep = STATIC; STATIC = true;
+    var mods = visModels(), rows = durumRows(mods), keep = STATIC; STATIC = true;
     try {
       var k = sub === 'eksik' ? renderKpis(mods, rows) : renderStokKpis(mods, rows);
       return pageHtml(durumTitle(sub), brandTxt() + ' · ' + pkTxt(), '<div class="kpis">' + k + '</div>' + durumIntro(sub) + durumHtml(sub));
@@ -1910,7 +1949,7 @@ table.mx { width: 100%; min-width: 0; }
   /* ----- indirme düğmeleri ----- */
   function busy(sel, on) { Array.prototype.forEach.call(document.querySelectorAll(sel), function (b) { b.disabled = on; }); }
   async function durumExport() {
-    var sub = S.dsub, fm = S.dfmt, base = 'durum-raporu-' + (sub === 'eksik' ? 'stok-bulunmayanlar' : 'bayi-stoklari') + (S.pk === 'ALL' ? '' : '-' + slug(S.pk)) + '-' + stamp();
+    var sub = S.dsub, fm = S.dfmt, base = 'durum-raporu-' + (sub === 'eksik' ? 'stok-bulunmayanlar' : 'bayi-stoklari') + (S.pk === 'ALL' ? '' : '-' + slug(S.pk)) + (S.dd === 'ALL' ? '' : '-' + slug(ddName())) + '-' + stamp();
     busy('#btnDurum', true);
     try {
       var name, ok;
@@ -1982,6 +2021,8 @@ table.mx { width: 100%; min-width: 0; }
   $('durumSub').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S.dsub = b.dataset.sub; render(); });
   $('durumFmt').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S.dfmt = b.dataset.f; render(); });
   $('btnDurum').addEventListener('click', durumExport);
+  $('selDealer').addEventListener('change', function (e) { S.dd = e.target.value; render(); });
+  $('durumBody').addEventListener('click', function (e) { if (e.target.closest('#btnDOpen')) { S.dopen = !S.dopen; render(); } });
   var aqt; $('aq').addEventListener('input', function (e) { clearTimeout(aqt); aqt = setTimeout(function () { S.aq = e.target.value; renderAnaliz(); }, 120); });
   $('analizBody').addEventListener('click', function (e) {
     var b = e.target.closest('[data-sort],[data-adealer],[data-aback],[data-aexp]');
