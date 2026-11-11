@@ -545,6 +545,20 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   .rt.kl { min-width: 0 !important; }
   .reks .eb, .sd > summary, .sdb .sg, .card, .rt td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+/* Eksik model özeti ve arama türü */
+.msum { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; font-size: 12.5px; line-height: 1.35; padding: 6px 10px; border: 1px solid color-mix(in srgb, var(--miss-solid) 45%, var(--line)); background: color-mix(in srgb, var(--miss-solid) 7%, var(--surface)); border-radius: 8px; }
+.msum .mst { font-weight: 700; color: var(--fg); margin-right: 4px; }
+.msum .mc { display: inline-flex; gap: 4px; padding: 1px 6px; border-radius: 5px; background: var(--miss-bg); color: var(--miss-fg); font-weight: 600; white-space: nowrap; }
+.msum .mc b { font-weight: 800; }
+.msum .mok { color: var(--fg-2); }
+.srow { display: flex; flex-wrap: wrap; gap: 8px; }
+.srow input[type="search"] { flex: 1 1 200px; min-width: 0; }
+.srow .seg { flex: none; }
+@media print {
+  .msum { font-size: 7.5px !important; padding: 2px 6px !important; gap: 1px 3px !important; border-radius: 4px !important; }
+  .msum .mc { padding: 0 3px !important; }
+  .msum, .msum .mc { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 @media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s; } }
 </style>
 </head>
@@ -593,8 +607,9 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
       <select id="selPk"></select>
     </div>
     <div class="field grow" id="qField">
-      <label for="q">Bayi, şehir veya cari kodu ara</label>
-      <input type="search" id="q" placeholder="Örn. Hatay, Kayalar, MY001405" autocomplete="off">
+      <label for="q" id="qLbl">Bayi adı ile ara</label>
+      <div class="srow"><div class="seg" id="qMode" role="group" aria-label="Arama türü"><button type="button" data-v="name" aria-pressed="true">Bayi adı</button><button type="button" data-v="city" aria-pressed="false">Şehir</button></div>
+      <input type="search" id="q" placeholder="Örn. Kayalar, MY001405" autocomplete="off"></div>
     </div>
     <div class="field" id="viewField">
       <span class="lbl">Görünüm</span>
@@ -621,8 +636,9 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   <div id="analizPane" class="pane" hidden>
     <div class="filters" id="aSearchField">
       <div class="field grow big">
-        <label for="aq">Bayi adı ile ara</label>
-        <input type="search" id="aq" placeholder="Örn. Kayalar, Hatay, MY001405" autocomplete="off">
+        <label for="aq" id="aqLbl">Bayi adı ile ara</label>
+        <div class="srow"><div class="seg" id="aqMode" role="group" aria-label="Arama türü"><button type="button" data-v="name" aria-pressed="true">Bayi adı</button><button type="button" data-v="city" aria-pressed="false">Şehir</button></div>
+        <input type="search" id="aq" placeholder="Örn. Kayalar, MY001405" autocomplete="off"></div>
       </div>
     </div>
     <div id="analizBody"></div>
@@ -635,8 +651,9 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
         <select id="selKarne"></select>
       </div>
       <div class="field grow" id="kSearchField">
-        <label for="kq">Bayi adı ile ara</label>
-        <input type="search" id="kq" placeholder="Örn. Kayalar, Hatay, MY001405" autocomplete="off">
+        <label for="kq" id="kqLbl">Bayi adı ile ara</label>
+        <div class="srow"><div class="seg" id="kqMode" role="group" aria-label="Arama türü"><button type="button" data-v="name" aria-pressed="true">Bayi adı</button><button type="button" data-v="city" aria-pressed="false">Şehir</button></div>
+        <input type="search" id="kq" placeholder="Örn. Kayalar, MY001405" autocomplete="off"></div>
       </div>
     </div>
     <div id="karneBody"></div>
@@ -964,7 +981,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   var ds = null, raw = null;
   var STANDALONE = true;
   var STATIC = false;
-  var S = { menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' } } };
+  var S = { menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', qm: 'name', aqm: 'name', kqm: 'name', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' } } };
   var $ = function (id) { return document.getElementById(id); };
   var norm = core.norm;
   var fmt = function (n) { return Number(n).toLocaleString('tr-TR'); };
@@ -1002,15 +1019,24 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   }
   /* Arama: boşlukla ayrılan her kelime bayi adı, şehir, cari kodu veya plasiyerde geçmeli (sıra önemsiz) */
   function qTokens() { return norm(S.q).split(' ').filter(Boolean); }
-  function qMatch(d) {
-    var tk = qTokens(); if (!tk.length) return true;
-    var hay = norm(d.n + ' ' + d.s + ' ' + d.c + ' ' + (d.pl || '') + ' ' + (d.pk || ''));
+  /* Arama türü: "Bayi adı" (bayi adı + cari kodu) veya "Şehir" (yalnız şehir adı); ikisi karışmaz */
+  function searchMatch(d, q, mode) {
+    var tk = norm(q).split(' ').filter(Boolean); if (!tk.length) return true;
+    var hay = mode === 'city' ? norm(d.s) : norm(d.n + ' ' + d.c);
     return tk.every(function (x) { return hay.indexOf(x) >= 0; });
+  }
+  function qMatch(d) { return searchMatch(d, S.q, S.qm); }
+  function qDesc(q, m) { return (m === 'city' ? 'Şehir araması: “' : 'Bayi adı araması: “') + q + '”'; }
+  function syncMode(seg, key, inp, lbl) {
+    Array.prototype.forEach.call($(seg).children, function (b) { b.setAttribute('aria-pressed', b.dataset.v === S[key] ? 'true' : 'false'); });
+    $(lbl).textContent = S[key] === 'city' ? 'Şehir adı ile ara' : 'Bayi adı ile ara';
+    $(inp).placeholder = S[key] === 'city' ? 'Örn. Hatay, İstanbul' : 'Örn. Kayalar, MY001405';
   }
   /* Çıktılarda (HTML/PDF/yazdırma) temsilci grupları yazılmaz; her bayi satırında: bayi adı, il, temsilci adı */
   function cityPl(d) { return d.s + ' · ' + d.pl; }
   function byNameTr(list, get) { return list.slice().sort(function (a, b) { return get(a).n.localeCompare(get(b).n, 'tr'); }); }
-  function noMatchMsg() { return S.q ? '“' + esc(S.q) + '” aramasına uyan bayi bulunamadı.' : 'Bu filtreyle bayi bulunamadı.'; }
+  function qHint(m) { return m === 'city' ? ' Şehir aramasındasınız; bayi adı için “Bayi adı” seçin.' : ' Bayi adı aramasındasınız; şehir için “Şehir” seçin.'; }
+  function noMatchMsg() { return S.q ? '“' + esc(S.q) + '” aramasına uyan bayi bulunamadı.' + qHint(S.qm) : 'Bu filtreyle bayi bulunamadı.'; }
   function visDealers(mods, ignoreQ) {
     var list = ds.dealers.filter(function (d) {
       if (S.pk !== 'ALL' && d.pk !== S.pk) return false;
@@ -1030,6 +1056,15 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   }
 
   /* ---------- görünüm ---------- */
+  /* Eksik Modeller başlığı: hangi modelden kaç bayide yok */
+  function missCounts(mods, rows) {
+    return mods.map(function (i) { return { i: i, n: rows.filter(function (r) { return status(r.d, i) === 'miss'; }).length }; }).filter(function (x) { return x.n > 0; })
+      .sort(function (a, b) { return b.n - a.n || ds.models[a.i].n.localeCompare(ds.models[b.i].n, 'tr'); });
+  }
+  function missSumHtml(mods, rows) {
+    var cn = missCounts(mods, rows);
+    return '<div class="msum"><span class="mst">Hangi modelden kaç bayide yok:</span>' + (cn.length ? cn.map(function (x) { return '<span class="mc">' + esc(ds.models[x.i].n) + ' <b>' + x.n + '</b></span>'; }).join('') : '<span class="mok">Eksik model yok.</span>') + '</div>';
+  }
   function renderKpis(mods, rows) {
     var cells = 0, dealersMiss = 0, unkDealers = 0, tot = 0;
     rows.forEach(function (r) { cells += r.miss; if (r.miss) dealersMiss++; if (!known(r.d)) unkDealers++; tot += mods.length; });
@@ -1279,7 +1314,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     return {
       v: v, mods: mods, all: all, hidden: hid,
       kpis: v === 'stok' ? renderStokKpis(mods, all) : renderKpis(mods, all),
-      main: v === 'matrix' ? matrixHtml(mods, rows) : v === 'bayi' ? listByBayi(mods, all) : v === 'stok' ? stokHtml(mods, all) : listByModel(mods, all)
+      main: (v === 'stok' ? '' : missSumHtml(mods, all)) + (v === 'matrix' ? matrixHtml(mods, rows) : v === 'bayi' ? listByBayi(mods, all) : v === 'stok' ? stokHtml(mods, all) : listByModel(mods, all))
     };
   }
 
@@ -1472,6 +1507,10 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     [12, 20, 12, 30, 14, 10, 20, 38].forEach(function (w, i) { wl.getColumn(i + 1).width = w; });
     wl.autoFilter = { from: 'A1', to: 'H1' };
     wl.views = [{ state: 'frozen', ySplit: 1 }];
+    var wsum = wb.addWorksheet(safeSheet('Model Özeti', used));
+    wsum.addRow(['Marka', 'Model', 'Eksik olduğu bayi sayısı']);
+    missCounts(mods, allRows.map(function (x) { return { d: x.r.d }; })).forEach(function (x) { wsum.addRow([ds.models[x.i].b === 'BAJAJ' ? 'Bajaj' : 'Kanuni', ds.models[x.i].n, x.n]); });
+    widths(wsum, [12, 28, 24]); wsum.views = [{ state: 'frozen', ySplit: 1 }];
     return polish(wb);
   }
 
@@ -1804,11 +1843,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   }
 
   /* ----- Bayi Stok Analiz / Bayi Karnesi verisi ----- */
-  function aMatch(d, q) {
-    var tk = norm(q === undefined ? S.aq : q).split(' ').filter(Boolean); if (!tk.length) return true;
-    var hay = norm(d.n + ' ' + d.s + ' ' + d.c + ' ' + (d.pl || '') + ' ' + (d.pk || ''));
-    return tk.every(function (x) { return hay.indexOf(x) >= 0; });
-  }
+  function aMatch(d, q, m) { return searchMatch(d, q === undefined ? S.aq : q, m === undefined ? S.aqm : m); }
   function sKey(bi, i) { return 's' + bi + '_' + i; }
   function mkRow(d) {
     var s = dStock(d, allMods()), o = { d: d, f: s.f, k: s.k, t: s.t, sb: dStock(d, visModels('BAJAJ')).t, sk: dStock(d, visModels('KANUNİ')).t, rec: [] };
@@ -1858,7 +1893,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   }
   function analizListHtml(rows) {
     var sp = !!ds.stats.split, ys = SY(), nb = BR.length;
-    if (!rows.length) return '<div class="panel empty">' + (S.aq ? '“' + esc(S.aq) + '” aramasına uyan bayi bulunamadı.' : 'Bu filtreyle bayi bulunamadı.') + '</div>';
+    if (!rows.length) return '<div class="panel empty">' + (S.aq ? '“' + esc(S.aq) + '” aramasına uyan bayi bulunamadı.' + qHint(S.aqm) : 'Bu filtreyle bayi bulunamadı.') + '</div>';
     var th = function (k, lab, g) { return '<th class="g' + g + '">' + hdrBtn('analiz', lab, k) + '</th>'; };
     var h = '<div class="panel"><div class="rwrap"><table class="rt an"><thead><tr><th class="l" rowspan="2">' + hdrBtn('analiz', 'Bayi', 'name') + '</th><th class="g1 gh" colspan="' + (3 + (sp ? 2 : 0)) + '">Stok</th>' +
       ys.map(function (y, i) { return '<th class="g' + gOf(i) + ' gh" colspan="' + (nb + 1) + '">' + esc(yLabel(i)) + '</th>'; }).join('') + '</tr><tr>' +
@@ -1960,7 +1995,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
 
   /* ----- Bayi Karnesi menüsü ----- */
   function kRows() {
-    return ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && aMatch(d, S.kq); }).slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'tr'); }).map(mkRow);
+    return ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && aMatch(d, S.kq, S.kqm); }).slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'tr'); }).map(mkRow);
   }
   function fillKarneSel() {
     var sel = $('selKarne'), list = ds.dealers.filter(function (d) { return S.pk === 'ALL' || d.pk === S.pk; }).slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'tr'); });
@@ -1977,7 +2012,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   }
   function karneListHtml(rows) {
     var ys = SY();
-    if (!rows.length) return '<div class="panel empty">' + (S.kq ? '“' + esc(S.kq) + '” aramasına uyan bayi bulunamadı.' : 'Bu filtreyle bayi bulunamadı.') + '</div>';
+    if (!rows.length) return '<div class="panel empty">' + (S.kq ? '“' + esc(S.kq) + '” aramasına uyan bayi bulunamadı.' + qHint(S.kqm) : 'Bu filtreyle bayi bulunamadı.') + '</div>';
     var h = '<div class="panel"><div class="rwrap"><table class="rt kl"><thead><tr><th class="l">Bayi</th><th class="g1">Stok adedi</th><th>Eksik model</th>' + ys.map(function (y, i) { return '<th class="g' + gOf(i) + '">' + esc(yLabel(i)) + '</th>'; }).join('') + '</tr></thead><tbody>';
     rows.forEach(function (r) {
       var mc = missGroups(r.d).miss.length;
@@ -2206,7 +2241,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   }
   function pdfAnalizList(rows) {
     var doc = pdfNew('l'), sp = !!ds.stats.split, ys = SY(), nb = BR.length, W = doc.internal.pageSize.getWidth();
-    var lines = [pkTxt() + (S.aq ? ' · Arama: “' + S.aq + '”' : '') + ' · ' + rows.length + ' bayi · Stok ve satış adedi: Bajaj ve Kanuni ayrı ayrı, toplam birlikte'];
+    var lines = [pkTxt() + (S.aq ? ' · ' + qDesc(S.aq, S.aqm) : '') + ' · ' + rows.length + ' bayi · Stok ve satış adedi: Bajaj ve Kanuni ayrı ayrı, toplam birlikte'];
     var y = pdfHead(doc, 25, 'Bayi Karnesi · Bayi Stok Analizi', lines);
     y = pdfBoxes(doc, y, summaryBoxes(rows));
     var heads = [[{ content: 'Bayi', rowSpan: 2, styles: { fillColor: HDR, textColor: [255, 255, 255], halign: 'center' } }, gHead('Stok', 1, { colSpan: 3 + (sp ? 2 : 0) })].concat(ys.map(function (yy, i) { return gHead(yLabel(i), gOf(i), { colSpan: nb + 1 }); })),
@@ -2392,7 +2427,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
       var body = salesNote() + summaryHtml(summaryBoxes(rows)) + analizListHtml(rows);
       /* Bayi adı aratıldıysa: eşleşen her bayinin model detayları ve aylık satışları da eklenir */
       if (S.aq && rows.length) body += rows.map(function (r) { return '<div class="pgbrk">' + analizDetailHtml(r.d) + '</div>'; }).join('');
-      return pageHtml('Bayi Karnesi · Bayi Stok Analizi', pkTxt() + (S.aq ? ' · Arama: ' + S.aq : ''), body, true);
+      return pageHtml('Bayi Karnesi · Bayi Stok Analizi', pkTxt() + (S.aq ? ' · ' + qDesc(S.aq, S.aqm) : ''), body, true);
     } finally { STATIC = keep; }
   }
 
@@ -2400,7 +2435,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     var keep = STATIC; STATIC = true;
     try {
       var body = salesNote() + rows.map(function (r, i) { return '<div' + (i ? ' class="pgbrk"' : '') + '>' + analizDetailHtml(r.d) + '</div>'; }).join('');
-      return pageHtml('Bayi Karnesi' + (rows.length === 1 ? ' · ' + rows[0].d.n : ''), pkTxt() + (S.kq ? ' · Arama: ' + S.kq : '') + ' · ' + rows.length + ' bayi', body, true);
+      return pageHtml('Bayi Karnesi' + (rows.length === 1 ? ' · ' + rows[0].d.n : ''), pkTxt() + (S.kq ? ' · ' + qDesc(S.kq, S.kqm) : '') + ' · ' + rows.length + ' bayi', body, true);
     } finally { STATIC = keep; }
   }
 
@@ -2427,9 +2462,18 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     var doc = pdfNew(land ? 'l' : undefined), title, y;
     var vTxt = rp === 'stok' ? (S.stokTab === 'model' ? 'Model bazında' : 'Bayi bazında') : ({ matrix: 'Tablo', bayi: 'Bayiye göre', model: 'Modele göre' })[v];
     title = (rp === 'stok' ? 'Bayi Stokları' : 'Eksik Modeller') + ' · ' + vTxt;
-    var lines = [brandTxt() + ' · ' + pkTxt() + (S.q ? ' · Arama: “' + S.q + '”' : '')];
+    var lines = [brandTxt() + ' · ' + pkTxt() + (S.q ? ' · ' + qDesc(S.q, S.qm) : '')];
     lines.push(rp === 'stok' ? 'Toplam = bayiye faturalı + konsinye adedi.' : 'Eksik model = bayiye faturalı stokta da konsinyede de bulunmayan model.');
     y = pdfHead(doc, 25, title, lines);
+    if (rp === 'eksik') {
+      var cn = missCounts(mods, rows), Wd = doc.internal.pageSize.getWidth();
+      doc.setFont('Inter', 'normal'); doc.setFontSize(7.5);
+      var ls0 = doc.splitTextToSize(cn.length ? cn.map(function (x) { return ds.models[x.i].n + ' ' + x.n; }).join('   ·   ') : 'Eksik model yok.', Wd - 28 - 6), bh = 5.2 + ls0.length * 3.2;
+      doc.setFillColor(253, 238, 236); doc.setDrawColor(198, 47, 36); doc.setLineWidth(.25); doc.roundedRect(14, y - 2, Wd - 28, bh, 1.2, 1.2, 'FD');
+      doc.setFont('Inter', 'bold'); doc.setFontSize(7.5); tc(doc, INK); doc.text('Hangi modelden kaç bayide yok:', 17, y + 1.6);
+      doc.setFont('Inter', 'normal'); tc(doc, [163, 35, 26]); doc.text(ls0, 17, y + 5);
+      y += bh + 2;
+    }
     var empty = function () { doc.setFont('Inter', 'normal'); doc.setFontSize(11); tc(doc, GREY); doc.text('Bu filtreyle listelenecek kayıt yok.', 14, y + 6); };
     var band = function (txt, nc) { return [{ content: txt, colSpan: nc, styles: { fillColor: [196, 212, 235], fontStyle: 'bold', halign: 'left', textColor: INK } }]; };
     var zf = function (j) { return j % 2 === 1 ? ZEBRA : [255, 255, 255]; };
@@ -2559,6 +2603,10 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   }
   seg('brandSeg', 'brand'); seg('viewSeg', 'view'); seg('repSeg', 'dlRep');
   $('selPk').addEventListener('change', function (e) { S.pk = e.target.value; render(); });
+  [['qMode', 'qm', 'q', 'qLbl', function () { render(); }], ['aqMode', 'aqm', 'aq', 'aqLbl', function () { renderAnaliz(); }], ['kqMode', 'kqm', 'kq', 'kqLbl', function () { renderKarne(); }]].forEach(function (a) {
+    $(a[0]).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S[a[1]] = b.dataset.v; syncMode(a[0], a[1], a[2], a[3]); a[4](); });
+    syncMode(a[0], a[1], a[2], a[3]);
+  });
   var qt; $('q').addEventListener('input', function (e) { clearTimeout(qt); qt = setTimeout(function () { S.q = e.target.value; render(); }, 120); });
   $('onlyMiss').addEventListener('change', function (e) { S.onlyMiss = e.target.checked; render(); });
   $('splitChk').addEventListener('change', function (e) { S.split = e.target.checked; render(); });
