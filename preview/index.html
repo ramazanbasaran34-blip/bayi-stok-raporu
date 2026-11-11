@@ -1456,7 +1456,7 @@ table.mx { width: 100%; min-width: 0; }
     var brandTxt = S.brand === 'ALL' ? 'Bajaj + Kanuni' : S.brand === 'BAJAJ' ? 'Bajaj' : 'Kanuni';
     var pl = S.pk === 'ALL' ? 'Tüm plasiyerler' : (plasiyers().filter(function (p) { return p.pk === S.pk; }).map(function (p) { return p.pk + ' · ' + p.pl; })[0] || S.pk);
     var viewTxt = curRep() === 'stok' ? '' : ({ matrix: 'Tablo', bayi: 'Bayiye göre eksikler', model: 'Modele göre eksikler' })[S.view];
-    var info = [brandTxt, pl].concat(viewTxt ? [viewTxt] : []).join(' · ');
+    var info = [brandTxt, pl].join(' · ');
     var css = Array.prototype.map.call(document.querySelectorAll('style'), function (s) { return s.textContent; }).join('\n');
     var body, script = '';
     var keep = { tab: S.stokTab, open: S.openAll, q: S.q };
@@ -1479,7 +1479,7 @@ table.mx { width: 100%; min-width: 0; }
       }
     } finally { STATIC = false; S.stokTab = keep.tab; S.openAll = keep.open; S.q = keep.q; }
     var when = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-    var htm = '<!doctype html>\n<html lang="tr">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<title>' + esc(title) + ' · Bayi Model Stok Raporu</title>\n<style>' + css + '\n[hidden]{display:none!important}body{margin:0}.mxwrap{max-height:none}</style>\n</head>\n<body>\n<div class="wrap">\n<div><h1>' + esc(title) + '</h1><div class="sub">' + esc(info) + ' · ORACLE BAYİ STOK RAPORU · Güncel veri girişi: ' + esc(dataStamp(ds.asOf)) + ' · İndirilme: ' + esc(when) + '</div></div>\n' + body + '\n<div class="info"><div class="panel" id="foot">' + $('foot').innerHTML + '</div></div>\n</div>\n' + script + PRINT_JS + '\n</body>\n</html>\n';
+    var htm = '<!doctype html>\n<html lang="tr">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<title>' + esc(title + (viewTxt ? ' · ' + viewTxt : '')) + ' · Bayi Model Stok Raporu</title>\n<style>' + css + '\n[hidden]{display:none!important}body{margin:0}.mxwrap{max-height:none}</style>\n</head>\n<body>\n<div class="wrap">\n<div><h1>' + esc(title + (viewTxt ? ' · ' + viewTxt : '')) + '</h1><div class="sub">' + esc(info) + ' · ORACLE BAYİ STOK RAPORU · Güncel veri girişi: ' + esc(dataStamp(ds.asOf)) + ' · İndirilme: ' + esc(when) + '</div></div>\n' + body + '\n<div class="info"><div class="panel" id="foot">' + $('foot').innerHTML + '</div></div>\n</div>\n' + script + PRINT_JS + '\n</body>\n</html>\n';
     return htm;
   }
   async function exportHtml() {
