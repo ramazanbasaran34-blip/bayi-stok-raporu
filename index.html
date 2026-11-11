@@ -231,6 +231,7 @@ table.mx { border-collapse: separate; border-spacing: 0; font-variant-numeric: t
 .dcard h2 { margin: 0; font-family: var(--font-head); font-size: 21px; font-weight: 700; }
 .dbadge { flex: none; width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center; font-family: var(--font-head); font-weight: 700; font-size: 13px; letter-spacing: .04em; }
 .dbadge.x { background: var(--both-bg); color: var(--both-fg); }
+.dbadge.p { background: var(--miss-bg); color: var(--miss-fg); }
 .dbadge.h { background: var(--depo-bg); color: var(--depo-fg); }
 .dbadge.u { background: var(--kons-bg); color: var(--kons-fg); }
 .dcard p { margin: 0; color: var(--fg-2); font-size: 15.5px; line-height: 1.5; }
@@ -562,7 +563,6 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     <div class="nav" id="nav" role="tablist" aria-label="Ana menü">
       <button type="button" role="tab" data-menu="eksik" aria-selected="true">Eksik Modeller</button>
       <button type="button" role="tab" data-menu="stok" aria-selected="false">Bayi Stokları</button>
-      <button type="button" role="tab" data-menu="durum" aria-selected="false">Durum Raporu</button>
       <button type="button" role="tab" data-menu="analiz" aria-selected="false">Bayi Stok Analiz</button>
       <button type="button" role="tab" data-menu="karne" aria-selected="false">Bayi Karnesi</button>
       <button type="button" role="tab" data-menu="indir" aria-selected="false">İndir</button>
@@ -618,30 +618,6 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     <span id="lgCell" hidden></span>
   </div>
 
-  <div id="durumPane" class="pane" hidden>
-    <div class="stokbar">
-      <div class="seg" id="durumSub" role="group" aria-label="Durum raporu">
-        <button type="button" data-sub="eksik" aria-pressed="true">Stok Bulunmayanlar</button>
-        <button type="button" data-sub="stok" aria-pressed="false">Bayi Stokları</button>
-      </div>
-      <div class="tbar">
-        <div class="seg" id="durumFmt" role="group" aria-label="Dosya türü">
-          <button type="button" data-f="xlsx" aria-pressed="true">Excel</button>
-          <button type="button" data-f="pdf" aria-pressed="false">PDF</button>
-          <button type="button" data-f="html" aria-pressed="false">HTML</button>
-        </div>
-        <button class="btn primary" id="btnDurum" type="button">Excel olarak indir</button>
-      </div>
-    </div>
-    <div class="filters">
-      <div class="field grow">
-        <label for="selDealer">Bayi seç (liste için)</label>
-        <select id="selDealer"></select>
-      </div>
-    </div>
-    <div id="durumBody"></div>
-  </div>
-
   <div id="analizPane" class="pane" hidden>
     <div class="filters" id="aSearchField">
       <div class="field grow big">
@@ -674,6 +650,11 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
         <p>Seçili raporu Excel dosyası olarak indirir. Plasiyer seçerseniz yalnız o plasiyerin sayfası gelir; seçmezseniz her plasiyer ayrı sayfada, başta özet sayfasıyla birlikte iner.</p>
         <div class="acts"><button class="btn primary" id="btnExport" type="button">Excel indir</button></div>
       </section>
+      <section class="dcard" aria-labelledby="dcP">
+        <div class="dhead"><span class="dbadge p" aria-hidden="true">PDF</span><h2 id="dcP">PDF indir</h2></div>
+        <p>Seçili raporu A4 PDF olarak indirir (satırlar sırayla iki tonda, tablo görünümü yatay sayfa). Marka, plasiyer ve arama filtreleri uygulanır.</p>
+        <div class="acts"><button class="btn primary" id="btnPdf" type="button">PDF indir</button></div>
+      </section>
       <section class="dcard" aria-labelledby="dcH">
         <div class="dhead"><span class="dbadge h" aria-hidden="true">HTML</span><h2 id="dcH">HTML indir</h2></div>
         <p>Seçili raporun tek dosyalık kopyasını indirir. iPhone, iPad ve bilgisayarda internet olmadan açılır; e-postayla veya mesajla gönderilebilir.</p>
@@ -681,7 +662,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
       </section>
       <section class="dcard" aria-labelledby="dcU">
         <div class="dhead"><span class="dbadge u" aria-hidden="true">YÜKLE</span><h2 id="dcU">Excel ile güncelle</h2></div>
-        <p>Yeni stok dosyasını seçin. Birden fazla dosya seçebilirsiniz (örneğin Şase Numaraları içeren dosya ile güncel Bayi Stok dosyası). Gerekli sayfalar: Bayi Stok ve Şase Numaraları. Satış adedi dosyasını (Dealer Retail sayfası) da seçebilirsiniz; Bayi Stok Analiz menüsündeki satış sütunları buradan gelir.</p>
+        <p>Yeni stok dosyasını seçin. Birden fazla dosya seçebilirsiniz (örneğin Şase Numaraları içeren dosya ile güncel Bayi Stok dosyası). Gerekli sayfalar: Bayi Stok ve Şase Numaraları. Satış adedi dosyasını (Dealer Retail sayfası) da seçebilirsiniz; Bayi Stok Analiz ve Bayi Karnesi menülerindeki satış sütunları buradan gelir.</p>
         <div class="acts">
           <input type="file" id="file" class="vh" accept=".xlsx,.xlsm" multiple>
           <label class="btn primary" for="file">Excel dosyası seç</label>
@@ -694,6 +675,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     </div>
   </div>
 
+  <div class="tbar" id="mainPdfBar"><button class="btn" id="btnMainPdf" type="button">PDF indir</button></div>
   <div id="main"></div>
 
   <div class="info"><div class="panel" id="foot"></div></div>
@@ -1307,9 +1289,9 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     Array.prototype.forEach.call($('nav').children, function (b) { b.setAttribute('aria-selected', b.dataset.menu === S.menu ? 'true' : 'false'); });
     Array.prototype.forEach.call($('repSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.v === S.dlRep ? 'true' : 'false'); });
     document.querySelector('.wrap > .info').hidden = ana || kar;
-    $('indirPane').hidden = !ind; $('durumPane').hidden = !dur; $('analizPane').hidden = !ana; $('karnePane').hidden = !kar;
+    $('indirPane').hidden = !ind; $('analizPane').hidden = !ana; $('karnePane').hidden = !kar;
     $('kpis').hidden = ind || ana || kar; $('main').hidden = ind || dur || ana || kar; $('coverage').hidden = ind || dur || ana || kar;
-    $('repField').hidden = !ind; $('qField').hidden = ind || dur || ana || kar; $('brandField').hidden = ana || kar;
+    $('repField').hidden = !ind; $('mainPdfBar').hidden = ind || ana || kar; $('qField').hidden = ind || dur || ana || kar; $('brandField').hidden = ana || kar;
     $('viewField').hidden = rp !== 'eksik';
     $('legend').hidden = ind || v !== 'matrix';
     $('onlyWrap').hidden = v !== 'matrix';
@@ -1320,7 +1302,6 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     $('splitWrap').hidden = !sp || v !== 'matrix';
     $('onlyMiss').disabled = v !== 'matrix';
     if (ind) { $('dlSummary').innerHTML = 'İndirilecek rapor: <b>' + esc(summaryText()) + '</b>'; return; }
-    if (dur) { renderDurum(); return; }
     if (ana) { renderAnaliz(); return; }
     if (kar) { renderKarne(); return; }
     var c = compose();
@@ -2437,6 +2418,106 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     } catch (e) { if (!e || e.code !== 'declined') toast('Dosya oluşturulamadı' + (e && e.message ? ': ' + e.message : '')); }
     finally { busy('#btnDurum', false); }
   }
+
+  /* ----- Eksik Modeller ve Bayi Stokları: PDF ----- */
+  function pdfMain() {
+    var c = compose(), rp = curRep(), v = curView(), mods = c.mods, sp = !!ds.stats.split;
+    var rows = byNameTr(c.all, function (r) { return r.d; });
+    var land = rp === 'eksik' && v === 'matrix';
+    var doc = pdfNew(land ? 'l' : undefined), title, y;
+    var vTxt = rp === 'stok' ? (S.stokTab === 'model' ? 'Model bazında' : 'Bayi bazında') : ({ matrix: 'Tablo', bayi: 'Bayiye göre', model: 'Modele göre' })[v];
+    title = (rp === 'stok' ? 'Bayi Stokları' : 'Eksik Modeller') + ' · ' + vTxt;
+    var lines = [brandTxt() + ' · ' + pkTxt() + (S.q ? ' · Arama: “' + S.q + '”' : '')];
+    lines.push(rp === 'stok' ? 'Toplam = bayiye faturalı + konsinye adedi.' : 'Eksik model = bayiye faturalı stokta da konsinyede de bulunmayan model.');
+    y = pdfHead(doc, 25, title, lines);
+    var empty = function () { doc.setFont('Inter', 'normal'); doc.setFontSize(11); tc(doc, GREY); doc.text('Bu filtreyle listelenecek kayıt yok.', 14, y + 6); };
+    var band = function (txt, nc) { return [{ content: txt, colSpan: nc, styles: { fillColor: [196, 212, 235], fontStyle: 'bold', halign: 'left', textColor: INK } }]; };
+    var zf = function (j) { return j % 2 === 1 ? ZEBRA : [255, 255, 255]; };
+    var zc = function (t, j, st) { return { content: t, styles: Object.assign({ fillColor: zf(j) }, st || {}) }; };
+    if (rp === 'stok') {
+      var nc = sp ? 4 : 2, body = [], head, cs, g = { f: 0, k: 0, t: 0 };
+      if (S.stokTab === 'model') {
+        mods.forEach(function (i) {
+          var dl = [], f = 0, k = 0, t = 0;
+          rows.forEach(function (r) { var tt = total(r.d, i); if (!tt) return; var ff = r.d.d ? r.d.d[i] : 0, kk = r.d.k ? r.d.k[i] : 0; dl.push({ d: r.d, f: ff, k: kk, t: tt }); f += ff; k += kk; t += tt; });
+          if (!dl.length) return;
+          dl.sort(function (a, b2) { return b2.t - a.t || a.d.n.localeCompare(b2.d.n, 'tr'); });
+          g.f += f; g.k += k; g.t += t;
+          body.push(band(bname(ds.models[i].b) + ' ' + ds.models[i].n + '   |   ' + dl.length + ' bayide   |   Toplam: ' + fmt(t) + ' adet', nc));
+          dl.forEach(function (x, j) { body.push([zc(x.d.n + ' · ' + x.d.s, j, { halign: 'left' })].concat(sp ? [zc(fmt(x.f), j), zc(fmt(x.k), j)] : []).concat([zc(fmt(x.t), j, { fontStyle: 'bold' })])); });
+        });
+        head = ['Bayi'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(['Toplam']);
+      } else {
+        rows.forEach(function (r) {
+          var s0 = dStock(r.d, mods), ms = mods.filter(function (i) { return total(r.d, i) > 0; });
+          g.f += s0.f; g.k += s0.k; g.t += s0.t;
+          body.push(band(r.d.n + ' · ' + cityPl(r.d) + '   |   Toplam: ' + fmt(s0.t) + ' adet', nc));
+          if (!ms.length) body.push([{ content: 'Stok yok', colSpan: nc, styles: { halign: 'left', textColor: GREY } }]);
+          ms.forEach(function (i, j) { body.push([zc(ds.models[i].n, j, { halign: 'left' })].concat(sp ? [zc(fmt(r.d.d ? r.d.d[i] : 0), j), zc(fmt(r.d.k ? r.d.k[i] : 0), j)] : []).concat([zc(fmt(total(r.d, i)), j, { fontStyle: 'bold' })])); });
+        });
+        head = ['Model'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(['Toplam']);
+      }
+      cs = { 0: { halign: 'left' } }; for (var q = 1; q < nc; q++) cs[q] = { cellWidth: 30, halign: 'center' };
+      var items = (sp ? [{ v: fmt(rows.length), l: 'Bayi' }, { v: fmt(g.f), l: 'Bayiye faturalı adet' }, { v: fmt(g.k), l: 'Konsinye adet' }, { v: fmt(g.t), l: 'Toplam adet' }] : [{ v: fmt(rows.length), l: 'Bayi' }, { v: fmt(g.t), l: 'Toplam adet' }]);
+      if (!rows.length || !body.length) empty();
+      else { y = pdfKpis(doc, y, items); pdfTable(doc, y, { head: head, body: body, foot: ['Genel toplam'].concat(sp ? [fmt(g.f), fmt(g.k)] : []).concat([fmt(g.t)]), cs: cs }); }
+    } else if (v === 'matrix') {
+      var mr = S.onlyMiss ? rows.filter(function (r) { return r.miss > 0; }) : rows;
+      if (!mr.length) empty();
+      else {
+        var heads = [['Bayi'].concat(mods.map(function (i) { return ds.models[i].n; })).concat(['Eksik'])];
+        var bd = mr.map(function (r, j) {
+          var line = [zc(r.d.n + ', ' + r.d.s, j, { halign: 'left', fontStyle: 'bold' })];
+          mods.forEach(function (i) {
+            var st = status(r.d, i);
+            if (st === 'miss') line.push({ content: 'YOK', styles: { fillColor: [251, 220, 216], textColor: [163, 35, 26], fontStyle: 'bold', halign: 'center' } });
+            else if (st === 'unk') line.push(zc('–', j, { halign: 'center' }));
+            else line.push(zc(String(total(r.d, i)), j, { halign: 'center' }));
+          });
+          line.push(zc(String(r.miss), j, { halign: 'center', fontStyle: 'bold' }));
+          return line;
+        });
+        var cm = mods.map(function (i) { return mr.filter(function (r) { return status(r.d, i) === 'miss'; }).length; });
+        var ft = [{ content: 'Eksik bayi sayısı', styles: { halign: 'left' } }].concat(cm.map(function (n) { return { content: n ? String(n) : '–', styles: { halign: 'center' } }; })).concat([{ content: String(sum(cm)), styles: { halign: 'center' } }]);
+        var cs2 = { 0: { cellWidth: 46 } }; cs2[mods.length + 1] = { cellWidth: 11 };
+        doc.autoTable({
+          startY: y, head: heads, body: bd, foot: [ft], showFoot: 'lastPage', theme: 'grid', margin: { top: 22, bottom: 16, left: 14, right: 14 }, rowPageBreak: 'avoid',
+          styles: { font: 'Inter', fontSize: 6.8, cellPadding: 1, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle', overflow: 'linebreak', halign: 'center' },
+          headStyles: { fillColor: HDR, textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center', fontSize: 6.2 }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' }, columnStyles: cs2
+        });
+      }
+    } else if (v === 'bayi') {
+      var sel = S.q ? rows : rows.filter(function (r) { return r.miss > 0; });
+      if (!sel.length) { doc.setFont('Inter', 'normal'); doc.setFontSize(11); tc(doc, GREY); doc.text('Eksik model bulunmuyor.', 14, y + 6); }
+      else {
+        y = pdfKpis(doc, y, [{ v: fmt(sel.length), l: 'Bayi' }, { v: fmt(sum(sel.map(function (r) { return r.miss; }))), l: 'Toplam eksik model sayısı' }]);
+        var bd2 = sel.map(function (r) {
+          var ml = mods.filter(function (i) { return status(r.d, i) === 'miss'; });
+          return [r.d.n + '\n' + cityPl(r.d), { content: String(r.miss), styles: { halign: 'center', fontStyle: 'bold' } }, ml.length ? modTxt(ml, false) : 'Eksik model yoktur'];
+        });
+        pdfTable(doc, y, { head: ['Bayi', 'Eksik model sayısı', 'Bayiye faturalı ve konsinyede olmayan modeller'], body: bd2, foot: ['Toplam (' + sel.length + ' bayi)', { content: fmt(sum(sel.map(function (r) { return r.miss; }))), styles: { halign: 'center' } }, ''], cs: { 0: { cellWidth: 62 }, 1: { cellWidth: 22 } } });
+      }
+    } else {
+      var bd3 = [];
+      mods.forEach(function (i) {
+        var ml = rows.filter(function (r) { return status(r.d, i) === 'miss'; });
+        if (ml.length) bd3.push([bname(ds.models[i].b) + ' ' + ds.models[i].n, { content: String(ml.length), styles: { halign: 'center', fontStyle: 'bold' } }, ml.map(function (r) { return r.d.n + ' (' + r.d.s + ')'; }).join(', ')]);
+      });
+      if (!bd3.length) { doc.setFont('Inter', 'normal'); doc.setFontSize(11); tc(doc, GREY); doc.text('Eksik model bulunmuyor.', 14, y + 6); }
+      else pdfTable(doc, y, { head: ['Model', 'Eksik bayi sayısı', 'Bayiye faturalı ve konsinyede olmayan bayiler'], body: bd3, foot: ['Toplam (' + bd3.length + ' model)', { content: fmt(sum(bd3.map(function (r) { return +r[1].content; }))), styles: { halign: 'center' } }, ''], cs: { 0: { cellWidth: 40 }, 1: { cellWidth: 22 } } });
+    }
+    pdfChrome(doc, title);
+    return doc;
+  }
+  async function exportPdf() {
+    busy('#btnPdf, #btnMainPdf', true);
+    try {
+      await loadPdf();
+      var name = fileBase() + '-' + (curRep() === 'stok' ? S.stokTab : curView()) + '.pdf';
+      if (await saveFile(name, pdfMain().output('arraybuffer'), 'application/pdf', true)) toast('PDF hazır: ' + name);
+    } catch (e) { if (!e || e.code !== 'declined') toast('PDF oluşturulamadı' + (e && e.message ? ': ' + e.message : '')); }
+    finally { busy('#btnPdf, #btnMainPdf', false); }
+  }
   async function karneExport(kind) {
     var one = S.kd !== 'ALL' ? dealerByCode(S.kd) : null, rows = one ? [mkRow(one)] : kRows();
     if (!rows.length) { toast('Çıktı alınacak bayi yok'); return; }
@@ -2499,6 +2580,7 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     window.scrollTo(0, 0);
   });
   $('btnExport').addEventListener('click', exportXlsx);
+  $('btnPdf').addEventListener('click', exportPdf); $('btnMainPdf').addEventListener('click', exportPdf);
   $('btnHtml').addEventListener('click', exportHtml);
   $('file').addEventListener('change', onFile);
   $('btnShare').addEventListener('click', shareData);
@@ -2508,11 +2590,6 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     else if (st.key === p[1]) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
     else { st.key = p[1]; st.dir = p[1] === 'name' ? 'asc' : 'desc'; }
   }
-  $('durumSub').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S.dsub = b.dataset.sub; render(); });
-  $('durumFmt').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S.dfmt = b.dataset.f; render(); });
-  $('btnDurum').addEventListener('click', durumExport);
-  $('selDealer').addEventListener('change', function (e) { S.dd = e.target.value; render(); });
-  $('durumBody').addEventListener('click', function (e) { if (e.target.closest('#btnDOpen')) { S.dopen = !S.dopen; render(); } });
   var aqt; $('aq').addEventListener('input', function (e) { clearTimeout(aqt); aqt = setTimeout(function () { S.aq = e.target.value; renderAnaliz(); }, 120); });
   $('selKarne').addEventListener('change', function (e) { S.kd = e.target.value; renderKarne(); });
   var kqt; $('kq').addEventListener('input', function (e) { clearTimeout(kqt); kqt = setTimeout(function () { S.kq = e.target.value; renderKarne(); }, 120); });
