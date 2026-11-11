@@ -449,6 +449,21 @@ table.mx { width: 100%; min-width: 0; }
   .rhead h2 { font-size: 15px !important; }
   .rh3 { font-size: 11px !important; }
 }
+
+/* Bayi Stok Analiz listesi: tek satır (bayi adı, il, temsilci), dar satır aralığı */
+.rt.an td, .rt.an th { padding: 5px 10px; }
+.rt.an thead th { padding: 7px 8px; }
+.rt td.nm1 { white-space: normal; }
+.rt td.nm1 .sm { color: var(--fg-2); font-size: 14px; font-weight: 400; }
+.rt td.nm1 .lnk, .rt td.nm1 b { font-size: 15px; min-height: 0; }
+@media print {
+  .rt.an td, .rt.an th { padding: 1.2px 4px !important; }
+  .rt.an thead th { padding: 3px 3px !important; }
+  .rt td.nm1 .sm { font-size: 8px !important; }
+  .rt td.nm1 b { font-size: 8.5px !important; }
+  .rt.an { font-size: 8.5px !important; }
+  .rt.an + * , .kpis { }
+}
 @media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s; } }
 </style>
 </head>
@@ -1712,7 +1727,7 @@ table.mx { width: 100%; min-width: 0; }
     ys.forEach(function (y, i) { h += th('y' + i, yLabel(i)); });
     h += '</tr></thead><tbody>';
     rows.forEach(function (r) {
-      h += '<tr><td class="l nm">' + (STATIC ? '<b>' + esc(r.d.n) + '</b>' : '<button type="button" class="lnk" data-adealer="' + esc(r.d.c) + '">' + esc(r.d.n) + '</button>') + '<small>' + (STATIC ? esc(cityPl(r.d)) : esc(r.d.s) + ' · ' + esc(r.d.c) + ' · ' + esc(r.d.pk)) + '</small></td>' +
+      h += '<tr><td class="l nm1">' + (STATIC ? '<b>' + esc(r.d.n) + '</b>' : '<button type="button" class="lnk" data-adealer="' + esc(r.d.c) + '">' + esc(r.d.n) + '</button>') + '<span class="sm">, ' + esc(r.d.s) + ', ' + esc(r.d.pl) + '</span></td>' +
         (sp ? '<td class="num">' + fmt(r.f) + '</td><td class="num">' + fmt(r.k) + '</td>' : '') + '<td class="num"><b>' + fmt(r.t) + '</b></td>';
       ys.forEach(function (y, i) { h += '<td class="num sale">' + (r['y' + i] == null ? '<span class="na">–</span>' : '<b>' + fmt(r['y' + i]) + '</b>') + '</td>'; });
       h += '</tr>';
@@ -1908,13 +1923,13 @@ table.mx { width: 100%; min-width: 0; }
     var y = pdfHead(doc, 25, 'Bayi Stok Analizi', lines);
     y = pdfKpis(doc, y, listKpis(rows));
     var body = rows.map(function (r) {
-      return [{ content: r.d.n + '\n' + cityPl(r.d), styles: { halign: 'left' } }].concat(sp ? [fmt(r.f), fmt(r.k)] : []).concat([{ content: fmt(r.t), styles: { fontStyle: 'bold' } }]).concat(ys.map(function (yy, i) { return { content: nn(r['y' + i]), styles: { fontStyle: 'bold' } }; }));
+      return [{ content: r.d.n + ', ' + r.d.s + ', ' + r.d.pl, styles: { halign: 'left' } }].concat(sp ? [fmt(r.f), fmt(r.k)] : []).concat([{ content: fmt(r.t), styles: { fontStyle: 'bold' } }]).concat(ys.map(function (yy, i) { return { content: nn(r['y' + i]), styles: { fontStyle: 'bold' } }; }));
     });
     var ft = ['Genel toplam (' + rows.length + ' bayi)'].concat(sp ? [fmt(sum(rows.map(function (r) { return r.f; }))), fmt(sum(rows.map(function (r) { return r.k; })))] : []).concat([fmt(sum(rows.map(function (r) { return r.t; })))]).concat(ys.map(function (yy, i) { return ds.sales ? fmt(sum(rows.map(function (r) { return r['y' + i] || 0; }))) : '–'; }));
     var cs = { 0: { halign: 'left' } }, ci = 1;
-    for (; ci < ft.length; ci++) cs[ci] = { cellWidth: ci >= ft.length - ys.length ? 27 : 20, halign: 'center' };
+    for (; ci < ft.length; ci++) cs[ci] = { cellWidth: ci >= ft.length - ys.length ? 24 : (ci === ft.length - ys.length - 1 ? 19 : 17), halign: 'center' };
     if (!rows.length) { doc.setFont('Inter', 'normal'); doc.setFontSize(11); tc(doc, GREY); doc.text('Bu filtreyle listelenecek bayi yok.', 14, y + 6); }
-    else pdfTable(doc, y, { head: ['Bayi'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(['Toplam stok']).concat(ys.map(function (yy, i) { return yLabel(i); })), body: body, foot: ft, cs: cs, fs: 8 });
+    else pdfTable(doc, y, { head: ['Bayi'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(['Toplam stok']).concat(ys.map(function (yy, i) { return yLabel(i); })), body: body, foot: ft, cs: cs, fs: 7.6, cp: 0.95 });
     pdfChrome(doc, 'Bayi Stok Analizi');
     return doc;
   }
