@@ -373,6 +373,27 @@ table.mx { width: 100%; min-width: 0; }
   .rhead h2 { font-size: 20px; }
   .tbar .btn { flex: 1 1 auto; justify-content: center; padding: 0 10px; font-size: 15px; }
 }
+
+/* ---- Eksik listeleri: kompakt (az yer kaplar) ---- */
+.list.cl { gap: 6px; }
+.list.cl .card { padding: 7px 10px; border-radius: 8px; }
+.list.cl .card h3 { font-size: 15px; gap: 2px 8px; }
+.list.cl .card h3 small { font-size: 12px; }
+.list.cl .subl { font-size: 12.5px; margin-top: 4px; }
+.list.cl .chips { gap: 3px 4px; margin-top: 3px !important; }
+.list.cl .chip { padding: 1px 6px; font-size: 12px; border-radius: 5px; line-height: 1.35; font-weight: 500; }
+.list.cl .chip .br { font-size: 9.5px; margin-right: 3px; }
+.list.cl .grouph { font-size: 12.5px; margin: 6px 2px 0; }
+@media (min-width: 1000px) {
+  .list.cl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .list.cl .grouph { grid-column: 1 / -1; }
+}
+@media (min-width: 1500px) { .list.cl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media print {
+  .list.cl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+  .list.cl .card { break-inside: avoid; box-shadow: none; }
+  .list.cl .chip { font-size: 10.5px; padding: 0 4px; }
+}
 @media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s; } }
 </style>
 </head>
@@ -1019,7 +1040,7 @@ table.mx { width: 100%; min-width: 0; }
     var sel = S.q ? rows : rows.filter(function (r) { return r.miss || r.unk; });
     if (!rows.length && S.q) return '<div class="panel empty">' + noMatchMsg() + '</div>';
     if (!sel.length) return '<div class="panel empty">Eksik model bulunmuyor.</div>';
-    var h = '<div class="list">', cur = null;
+    var h = '<div class="list cl">', cur = null;
     sel.forEach(function (r) {
       if (r.d.pk !== cur) { cur = r.d.pk; h += '<div class="grouph">' + esc(cur) + ' · ' + esc(r.d.pl) + '</div>'; }
       var missC = '', unkC = '';
@@ -1038,7 +1059,7 @@ table.mx { width: 100%; min-width: 0; }
   }
 
   function listByModel(mods, rows) {
-    var h = '<div class="list">', any = false;
+    var h = '<div class="list cl">', any = false;
     mods.forEach(function (i) {
       var m = ds.models[i], miss = [], unk = [];
       rows.forEach(function (r) { var s = status(r.d, i); if (s === 'miss') miss.push(r); else if (s === 'unk') unk.push(r); });
