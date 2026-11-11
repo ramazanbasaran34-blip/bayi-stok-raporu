@@ -546,18 +546,26 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   .reks .eb, .sd > summary, .sdb .sg, .card, .rt td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 /* Eksik model özeti ve arama türü */
-.msum { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; font-size: 12.5px; line-height: 1.35; padding: 6px 10px; border: 1px solid color-mix(in srgb, var(--miss-solid) 45%, var(--line)); background: color-mix(in srgb, var(--miss-solid) 7%, var(--surface)); border-radius: 8px; }
-.msum .mst { font-weight: 700; color: var(--fg); margin-right: 4px; }
-.msum .mc { display: inline-flex; gap: 4px; padding: 1px 6px; border-radius: 5px; background: var(--miss-bg); color: var(--miss-fg); font-weight: 600; white-space: nowrap; }
-.msum .mc b { font-weight: 800; }
-.msum .mok { color: var(--fg-2); }
+.msw { padding: 8px 10px; }
+.mst2 { font-family: var(--font-head); font-weight: 700; font-size: 14px; color: var(--fg); margin-bottom: 6px; }
+.mok { color: var(--fg-2); font-size: 14px; }
+.rt.ms2 { font-size: 13px; }
+.rt.ms2 th, .rt.ms2 td { padding: 5px 7px; }
+.rt.ms2 thead th { font-size: 11.5px; }
+.rt.ms2 tbody td { font-size: 15px; background: color-mix(in srgb, var(--miss-solid) 8%, var(--surface)) !important; }
+.rt.ms2 tbody td:first-child { font-weight: 600; background: var(--surface-2) !important; font-size: 12.5px; }
 .srow { display: flex; flex-wrap: wrap; gap: 8px; }
 .srow input[type="search"] { flex: 1 1 200px; min-width: 0; }
 .srow .seg { flex: none; }
 @media print {
-  .msum { font-size: 7.5px !important; padding: 2px 6px !important; gap: 1px 3px !important; border-radius: 4px !important; }
-  .msum .mc { padding: 0 3px !important; }
-  .msum, .msum .mc { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .msw { padding: 3px 5px !important; }
+  .mst2 { font-size: 8px !important; margin-bottom: 2px !important; }
+  .rt.ms2 { font-size: 7px !important; table-layout: auto; }
+  .rt.ms2 th, .rt.ms2 td { padding: 1px 2px !important; }
+  .rt.ms2 thead th { font-size: 6.4px !important; }
+  .rt.ms2 tbody td { font-size: 8.5px !important; }
+  .rt.ms2 tbody td:first-child { font-size: 6.4px !important; }
+  .rt.ms2 td, .rt.ms2 th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 @media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s; } }
 </style>
@@ -1063,7 +1071,11 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
   }
   function missSumHtml(mods, rows) {
     var cn = missCounts(mods, rows);
-    return '<div class="msum"><span class="mst">Hangi modelden kaç bayide yok:</span>' + (cn.length ? cn.map(function (x) { return '<span class="mc">' + esc(ds.models[x.i].n) + ' <b>' + x.n + '</b></span>'; }).join('') : '<span class="mok">Eksik model yok.</span>') + '</div>';
+    var h = '<div class="panel msw"><div class="mst2">Hangi modelden kaç bayide yok</div>';
+    if (!cn.length) return h + '<div class="mok">Eksik model yok.</div></div>';
+    h += '<div class="rwrap"><table class="rt ms2"><thead><tr><th class="l">Model</th>' + cn.map(function (x) { return '<th>' + esc(ds.models[x.i].n) + '</th>'; }).join('') + '</tr></thead><tbody><tr><td class="l">Eksik olan bayi sayısı</td>' +
+      cn.map(function (x) { return '<td class="num"><b class="redn">' + x.n + '</b></td>'; }).join('') + '</tr></tbody></table></div></div>';
+    return h;
   }
   function renderKpis(mods, rows) {
     var cells = 0, dealersMiss = 0, unkDealers = 0, tot = 0;
@@ -2466,13 +2478,25 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
     lines.push(rp === 'stok' ? 'Toplam = bayiye faturalı + konsinye adedi.' : 'Eksik model = bayiye faturalı stokta da konsinyede de bulunmayan model.');
     y = pdfHead(doc, 25, title, lines);
     if (rp === 'eksik') {
-      var cn = missCounts(mods, rows), Wd = doc.internal.pageSize.getWidth();
-      doc.setFont('Inter', 'normal'); doc.setFontSize(7.5);
-      var ls0 = doc.splitTextToSize(cn.length ? cn.map(function (x) { return ds.models[x.i].n + ' ' + x.n; }).join('   ·   ') : 'Eksik model yok.', Wd - 28 - 6), bh = 5.2 + ls0.length * 3.2;
-      doc.setFillColor(253, 238, 236); doc.setDrawColor(198, 47, 36); doc.setLineWidth(.25); doc.roundedRect(14, y - 2, Wd - 28, bh, 1.2, 1.2, 'FD');
-      doc.setFont('Inter', 'bold'); doc.setFontSize(7.5); tc(doc, INK); doc.text('Hangi modelden kaç bayide yok:', 17, y + 1.6);
-      doc.setFont('Inter', 'normal'); tc(doc, [163, 35, 26]); doc.text(ls0, 17, y + 5);
-      y += bh + 2;
+      var cn = missCounts(mods, rows);
+      doc.setFont('Inter', 'bold'); doc.setFontSize(9); tc(doc, INK); doc.text('Hangi modelden kaç bayide yok', 14, y);
+      if (!cn.length) { doc.setFont('Inter', 'normal'); doc.setFontSize(8); tc(doc, GREY); doc.text('Eksik model yok.', 14, y + 5); y += 9; }
+      else {
+        y += 2;
+        var per = Math.ceil(cn.length / Math.ceil(cn.length / (land ? 12 : 9)));
+        for (var o = 0; o < cn.length; o += per) {
+          var part = cn.slice(o, o + per), csm = { 0: { cellWidth: 30, halign: 'left', fontStyle: 'bold' } };
+          doc.autoTable({
+            startY: y, head: [['Model'].concat(part.map(function (x) { return ds.models[x.i].n; }))],
+            body: [[{ content: 'Eksik olan bayi sayısı', styles: { halign: 'left', fontStyle: 'bold', fillColor: SOFT, textColor: INK } }].concat(part.map(function (x) { return { content: String(x.n), styles: { halign: 'center', fontStyle: 'bold', fontSize: 9, textColor: [163, 35, 26], fillColor: [253, 238, 236] } }; }))],
+            theme: 'grid', margin: { top: 22, bottom: 16, left: 14, right: 14 }, tableWidth: 'auto', columnStyles: csm,
+            styles: { font: 'Inter', fontSize: 6.6, cellPadding: 1.1, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle', halign: 'center' },
+            headStyles: { fillColor: HDR, textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' }
+          });
+          y = doc.lastAutoTable.finalY + 1.5;
+        }
+        y += 3;
+      }
     }
     var empty = function () { doc.setFont('Inter', 'normal'); doc.setFontSize(11); tc(doc, GREY); doc.text('Bu filtreyle listelenecek kayıt yok.', 14, y + 6); };
     var band = function (txt, nc) { return [{ content: txt, colSpan: nc, styles: { fillColor: [196, 212, 235], fontStyle: 'bold', halign: 'left', textColor: INK } }]; };
