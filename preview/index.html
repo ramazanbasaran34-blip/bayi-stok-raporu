@@ -508,36 +508,49 @@ table.mx { width: 100%; min-width: 0; }
 .ekl { display: flex; flex-direction: column; gap: 6px; }
 .ekrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; }
 .ekch { display: flex; flex-wrap: wrap; gap: 6px; }
-.ekc { display: inline-flex; align-items: center; min-height: 28px; padding: 2px 10px; border-radius: 999px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.ekc { display: inline-flex; align-items: center; min-height: 34px; padding: 3px 14px; border-radius: 999px; font-size: 17px; font-weight: 600; white-space: nowrap; }
 .ekc.ok { background: var(--both-bg); color: var(--both-fg); }
 .ekc.no { background: var(--miss-bg); color: var(--miss-fg); }
 .ekc.gen { box-shadow: inset 0 0 0 1.5px currentColor; }
 .ekd { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 28px; padding: 2px 0; }
 @media (max-width: 760px) { .ekd { grid-template-columns: minmax(0, 1fr); } }
-.ekd h4 { margin: 4px 0 0; font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--accent); }
-.ekd .bh { font-size: 13px; letter-spacing: .05em; text-transform: uppercase; color: var(--fg-2); font-weight: 600; margin: 8px 0 0; font-family: var(--font-head); }
-.ekm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 16px; }
+.ekd h4 { margin: 4px 0 0; font-family: var(--font-head); font-size: 19px; font-weight: 700; color: var(--accent); }
+.ekd .bh { font-size: 14.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--fg-2); font-weight: 600; margin: 8px 0 0; font-family: var(--font-head); }
+.ekm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 18px; }
 .ekm .mn { font-weight: 600; }
 .ekm.no .mn { color: var(--miss-fg); }
 .ekm .tgs { display: flex; gap: 6px; flex-wrap: wrap; }
-.tg { display: inline-block; padding: 1px 9px; border-radius: 6px; font-size: 14px; font-weight: 600; background: var(--surface-2); color: var(--fg-2); white-space: nowrap; }
+.tg { display: inline-block; padding: 2px 10px; border-radius: 6px; font-size: 16px; font-weight: 600; background: var(--surface-2); color: var(--fg-2); white-space: nowrap; }
 .tg.depo { background: var(--depo-bg); color: var(--depo-fg); }
 .tg.kons { background: var(--kons-bg); color: var(--kons-fg); }
 .tg.no { background: var(--miss-bg); color: var(--miss-fg); }
-.ekok { background: var(--both-bg); color: var(--both-fg); padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 15px; }
+.ekok { background: var(--both-bg); color: var(--both-fg); padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 17px; }
+.ekbx .kboxes { grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 10px; }
+.ekbx .kbox { padding: 10px 16px 9px; }
+.ekbx .kbox .kt { font-size: 19px; margin-bottom: 4px; }
+.ekbx .kbox .kr { font-size: 20px; line-height: 1.65; color: var(--fg); }
+.ekbx .kbox .kr b { font-weight: 700; }
+.ekbx .kbox .kr.tot b { font-size: 26px; }
+.sd > summary .ekrow b { font-size: 19px; }
+.sd > summary .ekrow small { font-size: 15.5px; }
 @media print {
   .ekl { gap: 3px !important; }
-  .ekc { font-size: 8px !important; min-height: 0 !important; padding: 1px 6px !important; }
+  .ekbx .kboxes { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+  .ekbx .kbox { padding: 5px 10px !important; }
+  .ekbx .kbox .kt { font-size: 11.5px !important; }
+  .ekbx .kbox .kr { font-size: 11px !important; line-height: 1.5 !important; }
+  .ekbx .kbox .kr.tot b { font-size: 14px !important; }
+  .ekc { font-size: 9.5px !important; min-height: 0 !important; padding: 1px 7px !important; }
   .ekd { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 3px 14px !important; }
-  .ekd h4 { font-size: 10px !important; }
-  .ekd .bh { font-size: 7.5px !important; margin-top: 4px !important; }
-  .ekm { font-size: 9px !important; padding: 2px 0 !important; }
-  .tg { font-size: 8px !important; padding: 0 6px !important; }
-  .ekok { font-size: 9px !important; padding: 3px 8px !important; }
+  .ekd h4 { font-size: 11.5px !important; }
+  .ekd .bh { font-size: 8.5px !important; margin-top: 4px !important; }
+  .ekm { font-size: 10.5px !important; padding: 2px 0 !important; }
+  .tg { font-size: 9.5px !important; padding: 0 6px !important; }
+  .ekok { font-size: 10.5px !important; padding: 3px 8px !important; }
   .ekl .sd > summary { min-height: 0 !important; padding: 4px 8px !important; }
   .ekl .sd { break-inside: avoid; }
-  .ekl .sd > summary b { font-size: 10px !important; }
-  .ekl .sd > summary small { font-size: 8.5px !important; }
+  .ekl .sd > summary b { font-size: 11.5px !important; }
+  .ekl .sd > summary small { font-size: 9.5px !important; }
   .ekl .sd > summary .nm { padding-left: 12px !important; }
   .ekc, .tg, .ekok { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
@@ -2346,17 +2359,18 @@ span.no { margin-right: 5px; }
   var GC = { 1: [18, 66, 122], 2: [15, 118, 110], 3: [180, 83, 9] };
   var GT = { 1: [236, 242, 250], 2: [231, 245, 243], 3: [253, 242, 228] };
   var GT2 = { 1: [220, 232, 246], 2: [212, 235, 232], 3: [249, 229, 205] };
-  function pdfBoxes(doc, y, boxes) {
-    var W = doc.internal.pageSize.getWidth(), n = boxes.length, gap = 3, w = (W - 28 - gap * (n - 1)) / n, h = 22;
+  function pdfBoxes(doc, y, boxes, k) {
+    k = k || 1;
+    var W = doc.internal.pageSize.getWidth(), n = boxes.length, gap = 3, w = (W - 28 - gap * (n - 1)) / n, h = 22 * k;
     boxes.forEach(function (bx, i) {
       var x = 14 + i * (w + gap), c = GC[bx.g];
       doc.setFillColor(GT[bx.g][0], GT[bx.g][1], GT[bx.g][2]); doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(.3); doc.roundedRect(x, y, w, h, 1.5, 1.5, 'FD');
       doc.setFillColor(c[0], c[1], c[2]); doc.rect(x + .3, y, w - .6, 1.2, 'F');
-      doc.setFont('Inter', 'bold'); doc.setFontSize(8); doc.setTextColor(c[0], c[1], c[2]); doc.text(bx.t, x + 3, y + 5.2);
+      doc.setFont('Inter', 'bold'); doc.setFontSize(8 * k); doc.setTextColor(c[0], c[1], c[2]); doc.text(bx.t, x + 3, y + 5.2 * k);
       bx.r.forEach(function (l, j) {
-        var yy = y + 9.4 + j * 4.2;
-        if (l[2]) { doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(.2); doc.line(x + 3, yy - 3, x + w - 3, yy - 3); }
-        doc.setFont('Inter', l[2] ? 'bold' : 'normal'); doc.setFontSize(8); tc(doc, l[2] ? INK : GREY); doc.text(l[0], x + 3, yy);
+        var yy = y + 9.4 * k + j * 4.2 * k;
+        if (l[2]) { doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(.2); doc.line(x + 3, yy - (k > 1 ? 3.7 : 3), x + w - 3, yy - (k > 1 ? 3.7 : 3)); }
+        doc.setFont('Inter', l[2] ? 'bold' : 'normal'); doc.setFontSize(8 * k); tc(doc, l[2] ? INK : GREY); doc.text(l[0], x + 3, yy);
         doc.setFont('Inter', 'bold'); tc(doc, INK); doc.text(String(l[1]), x + w - 3, yy, { align: 'right' });
       });
     });
@@ -2874,11 +2888,11 @@ span.no { margin-right: 5px; }
   function renderEk() {
     [['efSeg', 'ef'], ['ebSeg', 'eb']].forEach(function (a) { Array.prototype.forEach.call($(a[0]).children, function (b) { b.setAttribute('aria-pressed', b.dataset.v === S[a[1]] ? 'true' : 'false'); }); });
     var all = ekRows(), rows = ekFiltered(all);
-    $('ekBody').innerHTML = ekToolbar() + ekIntro(rows.length, all.length) + summaryHtml(ekBoxes(all)) + ekListHtml(rows);
+    $('ekBody').innerHTML = ekToolbar() + ekIntro(rows.length, all.length) + '<div class="ekbx">' + summaryHtml(ekBoxes(all)) + '</div>' + ekListHtml(rows);
   }
   function ekSnapshot() {
     var keep = STATIC, all = ekRows(), rows = ekFiltered(all); STATIC = true;
-    try { return pageHtml(EK_TITLE, ekInfo(), ekIntro(rows.length, all.length) + summaryHtml(ekBoxes(all)) + ekListHtml(rows)); }
+    try { return pageHtml(EK_TITLE, ekInfo(), ekIntro(rows.length, all.length) + '<div class="ekbx">' + summaryHtml(ekBoxes(all)) + '</div>' + ekListHtml(rows)); }
     finally { STATIC = keep; }
   }
   function ekMissTxt(r) { return r.a.length ? missBrandTxt(r.a).map(function (x) { return x[0] + ': ' + x[1]; }).join('\n') : ''; }
@@ -2888,19 +2902,19 @@ span.no { margin-right: 5px; }
   function pdfEk() {
     var all = ekRows(), rows = ekFiltered(all), doc = pdfNew(), W = doc.internal.pageSize.getWidth(), showM = S.ef !== 'none';
     var y = pdfHead(doc, 25, EK_TITLE, [ekInfo(), 'Eksik model: bayiye faturalı stokta da konsinyede de bulunmayan model.']);
-    y = pdfBoxes(doc, y, ekBoxes(all));
+    y = pdfBoxes(doc, y, ekBoxes(all), 1.3);
     var ST = function (miss) { return { content: miss.length ? miss.length + ' eksik' : 'Eksiksiz', styles: { halign: 'center', fontStyle: 'bold', textColor: miss.length ? [198, 47, 36] : [27, 94, 47] } }; };
     var body = rows.map(function (r, i) {
       var line = [{ content: String(i + 1), styles: { halign: 'center' } }, { content: r.d.n + ', ' + r.d.s + ', ' + r.d.pl, styles: { halign: 'left', fontStyle: 'bold' } }, ST(r.b), ST(r.k), ST(r.a)];
-      if (showM) line.push({ content: ekMissTxt(r) || '–', styles: { halign: 'left', fontSize: 7.5 } });
+      if (showM) line.push({ content: ekMissTxt(r) || '–', styles: { halign: 'left', fontSize: 8.5 } });
       return line;
     });
     if (!body.length) body = [[{ content: 'Bu süzgeçle listelenecek bayi yok.', colSpan: showM ? 6 : 5, styles: { halign: 'center', textColor: GREY } }]];
-    var cs = { 0: { cellWidth: 9 }, 2: { cellWidth: 20 }, 3: { cellWidth: 20 }, 4: { cellWidth: 20 } };
-    if (showM) { cs[1] = { cellWidth: 62 }; cs[5] = { halign: 'left' }; }
+    var cs = { 0: { cellWidth: 10 }, 2: { cellWidth: 22 }, 3: { cellWidth: 22 }, 4: { cellWidth: 22 } };
+    if (showM) { cs[1] = { cellWidth: 58 }; cs[5] = { halign: 'left' }; }
     doc.autoTable({
       startY: y, head: [['No', 'Bayi Adı', 'Bajaj', 'Kanuni', 'Genel'].concat(showM ? ['Eksik modeller'] : [])], body: body, theme: 'grid', margin: { top: 22, bottom: 16, left: 14, right: 14 }, rowPageBreak: 'avoid',
-      styles: { font: 'Inter', fontSize: 8.3, cellPadding: 1.7, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle', overflow: 'linebreak' },
+      styles: { font: 'Inter', fontSize: 9.3, cellPadding: 1.9, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle', overflow: 'linebreak' },
       headStyles: { fillColor: HDR, textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' }, alternateRowStyles: { fillColor: ZEBRA }, columnStyles: cs
     });
     /* Bayi adı aratıldıysa: eşleşen bayilerin model durumu (olan / olmayan, faturalı / konsinye) her biri ayrı sayfada eklenir */
