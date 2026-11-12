@@ -505,6 +505,55 @@ table.mx { width: 100%; min-width: 0; }
 .rcols > div { min-width: 0; }
 @media (min-width: 1100px) { .rcols { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; } }
 .pgbrk { margin-top: 18px; }
+.ekl { display: flex; flex-direction: column; gap: 6px; }
+.ekrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; }
+.ekch { display: flex; flex-wrap: wrap; gap: 6px; }
+.ekc { display: inline-flex; align-items: center; min-height: 34px; padding: 3px 14px; border-radius: 999px; font-size: 17px; font-weight: 600; white-space: nowrap; }
+.ekc.ok { background: var(--both-bg); color: var(--both-fg); }
+.ekc.no { background: var(--miss-bg); color: var(--miss-fg); }
+.ekc.gen { box-shadow: inset 0 0 0 1.5px currentColor; }
+.ekd { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 28px; padding: 2px 0; }
+@media (max-width: 760px) { .ekd { grid-template-columns: minmax(0, 1fr); } }
+.ekd h4 { margin: 4px 0 0; font-family: var(--font-head); font-size: 19px; font-weight: 700; color: var(--accent); }
+.ekd .bh { font-size: 14.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--fg-2); font-weight: 600; margin: 8px 0 0; font-family: var(--font-head); }
+.ekm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 18px; }
+.ekm .mn { font-weight: 600; }
+.ekm.no .mn { color: var(--miss-fg); }
+.ekm .tgs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tg { display: inline-block; padding: 2px 10px; border-radius: 6px; font-size: 16px; font-weight: 600; background: var(--surface-2); color: var(--fg-2); white-space: nowrap; }
+.tg.depo { background: var(--depo-bg); color: var(--depo-fg); }
+.tg.kons { background: var(--kons-bg); color: var(--kons-fg); }
+.tg.no { background: var(--miss-bg); color: var(--miss-fg); }
+.ekok { background: var(--both-bg); color: var(--both-fg); padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 17px; }
+.ekbx .kboxes { grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 10px; }
+.ekbx .kbox { padding: 10px 16px 9px; }
+.ekbx .kbox .kt { font-size: 19px; margin-bottom: 4px; }
+.ekbx .kbox .kr { font-size: 20px; line-height: 1.65; color: var(--fg); }
+.ekbx .kbox .kr b { font-weight: 700; }
+.ekbx .kbox .kr.tot b { font-size: 26px; }
+.sd > summary .ekrow b { font-size: 19px; }
+.sd > summary .ekrow small { font-size: 15.5px; }
+@media print {
+  .ekl { gap: 3px !important; }
+  .ekbx .kboxes { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+  .ekbx .kbox { padding: 5px 10px !important; }
+  .ekbx .kbox .kt { font-size: 11.5px !important; }
+  .ekbx .kbox .kr { font-size: 11px !important; line-height: 1.5 !important; }
+  .ekbx .kbox .kr.tot b { font-size: 14px !important; }
+  .ekc { font-size: 9.5px !important; min-height: 0 !important; padding: 1px 7px !important; }
+  .ekd { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 3px 14px !important; }
+  .ekd h4 { font-size: 11.5px !important; }
+  .ekd .bh { font-size: 8.5px !important; margin-top: 4px !important; }
+  .ekm { font-size: 10.5px !important; padding: 2px 0 !important; }
+  .tg { font-size: 9.5px !important; padding: 0 6px !important; }
+  .ekok { font-size: 10.5px !important; padding: 3px 8px !important; }
+  .ekl .sd > summary { min-height: 0 !important; padding: 4px 8px !important; }
+  .ekl .sd { break-inside: avoid; }
+  .ekl .sd > summary b { font-size: 11.5px !important; }
+  .ekl .sd > summary small { font-size: 9.5px !important; }
+  .ekl .sd > summary .nm { padding-left: 12px !important; }
+  .ekc, .tg, .ekok { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 .rdbs { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .rdbs .rh3 { margin: 0; }
 .dbsbox { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: 10px; overflow: hidden; }
@@ -609,6 +658,7 @@ span.no { margin-right: 5px; }
   <div class="menubar">
     <div class="nav" id="nav" role="tablist" aria-label="Ana menü">
       <button type="button" role="tab" data-menu="eksik" aria-selected="true">Eksik Modeller</button>
+      <button type="button" role="tab" data-menu="eks" aria-selected="false">Eksik Modeli Olmayan Bayiler</button>
       <button type="button" role="tab" data-menu="stok" aria-selected="false">Bayi Stokları</button>
       <button type="button" role="tab" data-menu="mstok" aria-selected="false">Modele Göre Stoklar</button>
       <button type="button" role="tab" data-menu="analiz" aria-selected="false">Bayi Stok Analiz</button>
@@ -665,6 +715,33 @@ span.no { margin-right: 5px; }
     <span id="lgKons"><i class="sw kons"></i>Yalnız konsinye</span>
     <span id="lgUnk" hidden><i class="sw unk"></i>Stok bilgisi yok</span>
     <span id="lgCell" hidden></span>
+  </div>
+
+  <div id="ekPane" class="pane" hidden>
+    <div class="filters">
+      <div class="field">
+        <span class="lbl">Süzgeç</span>
+        <div class="seg" id="efSeg" role="group" aria-label="Süzgeç">
+          <button type="button" data-v="none" aria-pressed="true">Eksik modeli olmayanlar</button>
+          <button type="button" data-v="has" aria-pressed="false">Eksik modeli olanlar</button>
+          <button type="button" data-v="all" aria-pressed="false">Tümü</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl">Marka</span>
+        <div class="seg" id="ebSeg" role="group" aria-label="Marka">
+          <button type="button" data-v="ALL" aria-pressed="true">Genel (Bajaj + Kanuni)</button>
+          <button type="button" data-v="BAJAJ" aria-pressed="false">Bajaj</button>
+          <button type="button" data-v="KANUNİ" aria-pressed="false">Kanuni</button>
+        </div>
+      </div>
+      <div class="field grow">
+        <label for="eq" id="eqLbl">Bayi adı ile ara</label>
+        <div class="srow"><div class="seg" id="eqMode" role="group" aria-label="Arama türü"><button type="button" data-v="name" aria-pressed="true">Bayi adı</button><button type="button" data-v="city" aria-pressed="false">Şehir</button></div>
+        <input type="search" id="eq" placeholder="Örn. Kayalar, MY001405" autocomplete="off"></div>
+      </div>
+    </div>
+    <div id="ekBody"></div>
   </div>
 
   <div id="mstokPane" class="pane" hidden>
@@ -1064,7 +1141,7 @@ span.no { margin-right: 5px; }
   var ds = null, raw = null;
   var STANDALONE = true;
   var STATIC = false;
-  var S = { menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', qm: 'name', aqm: 'name', kqm: 'name', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' }, mstok: { key: 't', dir: 'desc' } }, mOpen: false };
+  var S = { menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', qm: 'name', aqm: 'name', kqm: 'name', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' }, mstok: { key: 't', dir: 'desc' } }, mOpen: false, ef: 'none', eb: 'ALL', eq: '', eqm: 'name', eOpen: false };
   var $ = function (id) { return document.getElementById(id); };
   var norm = core.norm;
   var fmt = function (n) { return Number(n).toLocaleString('tr-TR'); };
@@ -1407,13 +1484,13 @@ span.no { margin-right: 5px; }
 
   function render() {
     if (!ds) return;
-    var ind = S.menu === 'indir', dur = S.menu === 'durum', ana = S.menu === 'analiz', kar = S.menu === 'karne', mst = S.menu === 'mstok', rp = curRep(), v = curView();
+    var ind = S.menu === 'indir', dur = S.menu === 'durum', ana = S.menu === 'analiz', kar = S.menu === 'karne', mst = S.menu === 'mstok', eks = S.menu === 'eks', rp = curRep(), v = curView();
     Array.prototype.forEach.call($('nav').children, function (b) { b.setAttribute('aria-selected', b.dataset.menu === S.menu ? 'true' : 'false'); });
     Array.prototype.forEach.call($('repSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.v === S.dlRep ? 'true' : 'false'); });
-    document.querySelector('.wrap > .info').hidden = ana || kar || mst;
-    $('indirPane').hidden = !ind; $('analizPane').hidden = !ana; $('karnePane').hidden = !kar; $('mstokPane').hidden = !mst;
-    $('kpis').hidden = ind || ana || kar || mst; $('main').hidden = ind || dur || ana || kar || mst; $('coverage').hidden = ind || dur || ana || kar || mst;
-    $('repField').hidden = !ind; $('mainPdfBar').hidden = ind || ana || kar || mst; $('qField').hidden = ind || dur || ana || kar; $('brandField').hidden = ana || kar;
+    document.querySelector('.wrap > .info').hidden = ana || kar || mst || eks;
+    $('indirPane').hidden = !ind; $('analizPane').hidden = !ana; $('karnePane').hidden = !kar; $('mstokPane').hidden = !mst; $('ekPane').hidden = !eks;
+    $('kpis').hidden = ind || ana || kar || mst || eks; $('main').hidden = ind || dur || ana || kar || mst || eks; $('coverage').hidden = ind || dur || ana || kar || mst || eks;
+    $('repField').hidden = !ind; $('mainPdfBar').hidden = ind || ana || kar || mst || eks; $('qField').hidden = ind || dur || ana || kar || eks; $('brandField').hidden = ana || kar || eks;
     $('viewField').hidden = rp !== 'eksik';
     $('legend').hidden = ind || v !== 'matrix';
     $('onlyWrap').hidden = v !== 'matrix';
@@ -1427,6 +1504,7 @@ span.no { margin-right: 5px; }
     if (ana) { renderAnaliz(); return; }
     if (kar) { renderKarne(); return; }
     if (mst) { renderMStok(); return; }
+    if (eks) { renderEk(); return; }
     var c = compose();
     $('kpis').innerHTML = c.kpis;
     $('main').innerHTML = (c.hidden > 0 ? '<div class="notice" role="status"><b>' + c.hidden + ' bayi daha aramanıza uyuyor</b> ama seçili plasiyer veya &ldquo;Yalnız eksiği olan bayiler&rdquo; filtresi nedeniyle gizli. <button class="btn" type="button" id="btnClearF" style="margin-top:8px">Filtreleri kaldır</button></div>' : '') + c.main;
@@ -2281,17 +2359,18 @@ span.no { margin-right: 5px; }
   var GC = { 1: [18, 66, 122], 2: [15, 118, 110], 3: [180, 83, 9] };
   var GT = { 1: [236, 242, 250], 2: [231, 245, 243], 3: [253, 242, 228] };
   var GT2 = { 1: [220, 232, 246], 2: [212, 235, 232], 3: [249, 229, 205] };
-  function pdfBoxes(doc, y, boxes) {
-    var W = doc.internal.pageSize.getWidth(), n = boxes.length, gap = 3, w = (W - 28 - gap * (n - 1)) / n, h = 22;
+  function pdfBoxes(doc, y, boxes, k) {
+    k = k || 1;
+    var W = doc.internal.pageSize.getWidth(), n = boxes.length, gap = 3, w = (W - 28 - gap * (n - 1)) / n, h = 22 * k;
     boxes.forEach(function (bx, i) {
       var x = 14 + i * (w + gap), c = GC[bx.g];
       doc.setFillColor(GT[bx.g][0], GT[bx.g][1], GT[bx.g][2]); doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(.3); doc.roundedRect(x, y, w, h, 1.5, 1.5, 'FD');
       doc.setFillColor(c[0], c[1], c[2]); doc.rect(x + .3, y, w - .6, 1.2, 'F');
-      doc.setFont('Inter', 'bold'); doc.setFontSize(8); doc.setTextColor(c[0], c[1], c[2]); doc.text(bx.t, x + 3, y + 5.2);
+      doc.setFont('Inter', 'bold'); doc.setFontSize(8 * k); doc.setTextColor(c[0], c[1], c[2]); doc.text(bx.t, x + 3, y + 5.2 * k);
       bx.r.forEach(function (l, j) {
-        var yy = y + 9.4 + j * 4.2;
-        if (l[2]) { doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(.2); doc.line(x + 3, yy - 3, x + w - 3, yy - 3); }
-        doc.setFont('Inter', l[2] ? 'bold' : 'normal'); doc.setFontSize(8); tc(doc, l[2] ? INK : GREY); doc.text(l[0], x + 3, yy);
+        var yy = y + 9.4 * k + j * 4.2 * k;
+        if (l[2]) { doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(.2); doc.line(x + 3, yy - (k > 1 ? 3.7 : 3), x + w - 3, yy - (k > 1 ? 3.7 : 3)); }
+        doc.setFont('Inter', l[2] ? 'bold' : 'normal'); doc.setFontSize(8 * k); tc(doc, l[2] ? INK : GREY); doc.text(l[0], x + 3, yy);
         doc.setFont('Inter', 'bold'); tc(doc, INK); doc.text(String(l[1]), x + w - 3, yy, { align: 'right' });
       });
     });
@@ -2743,6 +2822,156 @@ span.no { margin-right: 5px; }
     if (!key || !mm[key][y]) return 0;
     return sum(mm[key][y]);
   }
+  /* ----- Eksik Modeli Olmayan Bayiler ----- */
+  var EK_TITLE = 'Eksik Modeli Olmayan Bayiler';
+  var EKK = { BAJAJ: 'b', 'KANUNİ': 'k', ALL: 'a' };
+  function ekRows() {
+    var mods = { b: visModels('BAJAJ'), k: visModels('KANUNİ'), a: visModels('ALL') };
+    return ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && searchMatch(d, S.eq, S.eqm); })
+      .slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'tr'); })
+      .map(function (d) {
+        var o = { d: d };
+        ['b', 'k', 'a'].forEach(function (k) { o[k] = mods[k].filter(function (i) { return status(d, i) === 'miss'; }); });
+        return o;
+      });
+  }
+  function ekFiltered(rows) {
+    var k = EKK[S.eb];
+    return rows.filter(function (r) { return S.ef === 'all' || (S.ef === 'none' ? !r[k].length : r[k].length > 0); });
+  }
+  function ekBoxes(rows) {
+    var n = rows.length, c = function (k) { return rows.filter(function (r) { return !r[k].length; }).length; };
+    return [
+      { g: 1, t: 'Bayi sayısı', r: [['Bayi', fmt(n), 1]] },
+      { g: 2, t: 'Eksik modeli olmayan bayi', r: [['Bajaj', fmt(c('b'))], ['Kanuni', fmt(c('k'))], ['Genel (Bajaj + Kanuni)', fmt(c('a')), 1]] },
+      { g: 3, t: 'Eksik modeli olan bayi', r: [['Bajaj', fmt(n - c('b'))], ['Kanuni', fmt(n - c('k'))], ['Genel (Bajaj + Kanuni)', fmt(n - c('a')), 1]] }
+    ];
+  }
+  function ekFilterTxt() {
+    return 'Süzgeç: ' + ({ none: 'Eksik modeli olmayanlar', has: 'Eksik modeli olanlar', all: 'Tümü' })[S.ef] + ' · Marka: ' + ({ ALL: 'Genel (Bajaj + Kanuni)', BAJAJ: 'Bajaj', 'KANUNİ': 'Kanuni' })[S.eb];
+  }
+  function ekInfo() { return pkTxt() + (S.eq ? ' · ' + qDesc(S.eq, S.eqm) : '') + ' · ' + ekFilterTxt(); }
+  function ekChip(lab, miss, gen) { return '<span class="ekc ' + (miss.length ? 'no' : 'ok') + (gen ? ' gen' : '') + '">' + esc(lab) + ' · ' + (miss.length ? miss.length + ' eksik' : 'Eksiksiz') + '</span>'; }
+  function ekTags(d, i) {
+    var f = d.d ? d.d[i] : 0, k = d.k ? d.k[i] : 0, s = status(d, i);
+    if (s === 'both' || s === 'depo' || s === 'kons') return (f > 0 ? '<span class="tg depo">Faturalı ' + fmt(f) + '</span>' : '') + (k > 0 ? '<span class="tg kons">Konsinye ' + fmt(k) + '</span>' : '');
+    return '<span class="tg">Toplam ' + fmt(total(d, i)) + '</span>';
+  }
+  function ekDetail(d) {
+    var mods = visModels('ALL'), have = [], miss = [];
+    mods.forEach(function (i) { (status(d, i) === 'miss' ? miss : have).push(i); });
+    var byBrand = function (arr, fn, hd) {
+      return BR.map(function (b) {
+        var xs = arr.filter(function (i) { return ds.models[i].b === b.k; });
+        return xs.length ? '<div class="bh">' + esc(b.n) + '</div>' + xs.map(fn).join('') : '';
+      }).join('');
+    };
+    var left = '<div><h4>Olan modeller (' + have.length + ')</h4>' + (have.length ? byBrand(have, function (i) { return '<div class="ekm"><span class="mn">' + esc(ds.models[i].n) + '</span><span class="tgs">' + ekTags(d, i) + '</span></div>'; }) : '<div class="ekm"><span class="mn">Bu bayide stok yok.</span></div>') + '</div>';
+    var right = '<div><h4>Olmayan modeller (' + miss.length + ')</h4>' + (miss.length ? byBrand(miss, function (i) { return '<div class="ekm no"><span class="mn">' + esc(ds.models[i].n) + '</span><span class="tgs"><span class="tg no">Yok</span></span></div>'; }) : '<div class="ekok">Eksik model yoktur. Tüm modellerden bayiye faturalı veya konsinye stok var.</div>') + '</div>';
+    return '<div class="ekd">' + left + right + '</div>';
+  }
+  function ekItem(r, n) {
+    return '<details class="sd"' + (S.eOpen ? ' open' : '') + '><summary><div class="ekrow"><span class="nm"><b><span class="no">' + n + '.</span>' + esc(r.d.n) + '</b><small>' + esc(r.d.s) + ' · ' + esc(r.d.pl) + '</small></span><span class="ekch">' +
+      ekChip('Bajaj', r.b) + ekChip('Kanuni', r.k) + ekChip('Genel', r.a, true) + '</span></div></summary><div class="sdb">' + ekDetail(r.d) + '</div></details>';
+  }
+  function ekListHtml(rows) {
+    if (!rows.length) return '<div class="panel empty">' + (S.eq ? '“' + esc(S.eq) + '” aramasına uyan bayi bulunamadı.' + qHint(S.eqm) : 'Bu süzgeçle listelenecek bayi yok.') + '</div>';
+    return '<div class="ekl">' + rows.map(function (r, i) { return ekItem(r, i + 1); }).join('') + '</div>';
+  }
+  function ekIntro(nShown, nAll) {
+    return '<div class="rintro"><b>' + EK_TITLE + '</b><br><span>' + fmt(nShown) + ' bayi listeleniyor (' + fmt(nAll) + ' bayi içinden). Eksik model: bayiye faturalı stokta da konsinyede de bulunmayan model. Bayi adına dokunun: olan ve olmayan modeller, olanların faturalı mı konsinye mi olduğu açılır.</span></div>';
+  }
+  function ekToolbar() {
+    var b = function (a, lab, cls) { return '<button type="button" class="btn' + (cls ? ' ' + cls : '') + '" data-eexp="' + a + '">' + lab + '</button>'; };
+    return '<div class="tbar">' + b('pdf', 'PDF indir', 'primary') + b('xlsx', 'Excel') + b('html', 'HTML') + '<button type="button" class="btn" data-eopen="1">' + (S.eOpen ? 'Tümünü kapat' : 'Tümünü aç') + '</button></div>';
+  }
+  function renderEk() {
+    [['efSeg', 'ef'], ['ebSeg', 'eb']].forEach(function (a) { Array.prototype.forEach.call($(a[0]).children, function (b) { b.setAttribute('aria-pressed', b.dataset.v === S[a[1]] ? 'true' : 'false'); }); });
+    var all = ekRows(), rows = ekFiltered(all);
+    $('ekBody').innerHTML = ekToolbar() + ekIntro(rows.length, all.length) + '<div class="ekbx">' + summaryHtml(ekBoxes(all)) + '</div>' + ekListHtml(rows);
+  }
+  function ekSnapshot() {
+    var keep = STATIC, all = ekRows(), rows = ekFiltered(all); STATIC = true;
+    try { return pageHtml(EK_TITLE, ekInfo(), ekIntro(rows.length, all.length) + '<div class="ekbx">' + summaryHtml(ekBoxes(all)) + '</div>' + ekListHtml(rows)); }
+    finally { STATIC = keep; }
+  }
+  function ekMissTxt(r) { return r.a.length ? missBrandTxt(r.a).map(function (x) { return x[0] + ': ' + x[1]; }).join('\n') : ''; }
+  function ekModelLines(d) {
+    return visModels('ALL').map(function (i) { var m = ds.models[i], tt = total(d, i); return { b: bname(m.b), n: m.n, ok: tt > 0, f: d.d ? d.d[i] : 0, k: d.k ? d.k[i] : 0, t: tt }; });
+  }
+  function pdfEk() {
+    var all = ekRows(), rows = ekFiltered(all), doc = pdfNew(), W = doc.internal.pageSize.getWidth(), showM = S.ef !== 'none';
+    var y = pdfHead(doc, 25, EK_TITLE, [ekInfo(), 'Eksik model: bayiye faturalı stokta da konsinyede de bulunmayan model.']);
+    y = pdfBoxes(doc, y, ekBoxes(all), 1.3);
+    var ST = function (miss) { return { content: miss.length ? miss.length + ' eksik' : 'Eksiksiz', styles: { halign: 'center', fontStyle: 'bold', textColor: miss.length ? [198, 47, 36] : [27, 94, 47] } }; };
+    var body = rows.map(function (r, i) {
+      var line = [{ content: String(i + 1), styles: { halign: 'center' } }, { content: r.d.n + ', ' + r.d.s + ', ' + r.d.pl, styles: { halign: 'left', fontStyle: 'bold' } }, ST(r.b), ST(r.k), ST(r.a)];
+      if (showM) line.push({ content: ekMissTxt(r) || '–', styles: { halign: 'left', fontSize: 8.5 } });
+      return line;
+    });
+    if (!body.length) body = [[{ content: 'Bu süzgeçle listelenecek bayi yok.', colSpan: showM ? 6 : 5, styles: { halign: 'center', textColor: GREY } }]];
+    var cs = { 0: { cellWidth: 10 }, 2: { cellWidth: 22 }, 3: { cellWidth: 22 }, 4: { cellWidth: 22 } };
+    if (showM) { cs[1] = { cellWidth: 58 }; cs[5] = { halign: 'left' }; }
+    doc.autoTable({
+      startY: y, head: [['No', 'Bayi Adı', 'Bajaj', 'Kanuni', 'Genel'].concat(showM ? ['Eksik modeller'] : [])], body: body, theme: 'grid', margin: { top: 22, bottom: 16, left: 14, right: 14 }, rowPageBreak: 'avoid',
+      styles: { font: 'Inter', fontSize: 9.3, cellPadding: 1.9, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle', overflow: 'linebreak' },
+      headStyles: { fillColor: HDR, textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' }, alternateRowStyles: { fillColor: ZEBRA }, columnStyles: cs
+    });
+    /* Bayi adı aratıldıysa: eşleşen bayilerin model durumu (olan / olmayan, faturalı / konsinye) her biri ayrı sayfada eklenir */
+    if (S.eq && rows.length) rows.forEach(function (r) {
+      doc.addPage();
+      var yy = 24;
+      doc.setFont('Inter', 'bold'); doc.setFontSize(8.5); tc(doc, GREY); doc.text('MODEL DURUMU', 14, yy); yy += 5.5;
+      doc.setFontSize(14); tc(doc, NAVY); doc.text(r.d.n, 14, yy);
+      doc.setFont('Inter', 'normal'); doc.setFontSize(9); tc(doc, GREY); doc.text(r.d.s + ' · ' + r.d.c + ' · ' + r.d.pl, W - 14, yy, { align: 'right' }); yy += 6;
+      var ls = ekModelLines(r.d), nOk = ls.filter(function (x) { return x.ok; }).length;
+      doc.setFontSize(9.5); tc(doc, GREY); doc.text('Olan modeller: ' + nOk + ' · Olmayan modeller: ' + (ls.length - nOk), 14, yy); yy += 4;
+      doc.autoTable({
+        startY: yy, head: [['No', 'Marka', 'Model', 'Durum', 'Faturalı', 'Konsinye', 'Toplam']],
+        body: ls.map(function (x, i) {
+          var no = !x.ok, st = no ? { textColor: [198, 47, 36], fontStyle: 'bold' } : { fontStyle: 'bold' };
+          return [{ content: String(i + 1), styles: { halign: 'center' } }, x.b, { content: x.n, styles: { fontStyle: 'bold', halign: 'left' } }, { content: no ? 'Yok' : 'Var', styles: Object.assign({ halign: 'center' }, no ? st : { textColor: [27, 94, 47], fontStyle: 'bold' }) },
+            { content: no ? '–' : fmt(x.f), styles: { halign: 'center' } }, { content: no ? '–' : fmt(x.k), styles: { halign: 'center' } }, { content: no ? '–' : fmt(x.t), styles: { halign: 'center', fontStyle: 'bold' } }];
+        }),
+        theme: 'grid', margin: { top: 22, bottom: 16, left: 14, right: 14 }, rowPageBreak: 'avoid',
+        styles: { font: 'Inter', fontSize: 8.8, cellPadding: 1.8, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle' },
+        headStyles: { fillColor: HDR, textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' }, alternateRowStyles: { fillColor: ZEBRA },
+        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 22 }, 2: { halign: 'left' }, 3: { cellWidth: 22 }, 4: { cellWidth: 24 }, 5: { cellWidth: 24 }, 6: { cellWidth: 24 } }
+      });
+    });
+    pdfChrome(doc, EK_TITLE);
+    return doc;
+  }
+  function buildEkWorkbook() {
+    var all = ekRows(), rows = ekFiltered(all), wb = new ExcelJS.Workbook(); wb.creator = 'ORACLE BAYİ STOK RAPORU'; wb.created = new Date();
+    var c = function (k) { return all.filter(function (r) { return !r[k].length; }).length; };
+    var w1 = wb.addWorksheet('Özet'); w1.addRow(['Alan', 'Değer']);
+    [['Rapor', EK_TITLE], ['Süzgeç', ekInfo()], ['Bayi sayısı', all.length], ['Eksik modeli olmayan bayi · Bajaj', c('b')], ['Eksik modeli olmayan bayi · Kanuni', c('k')], ['Eksik modeli olmayan bayi · Genel (Bajaj + Kanuni)', c('a')],
+      ['Eksik modeli olan bayi · Bajaj', all.length - c('b')], ['Eksik modeli olan bayi · Kanuni', all.length - c('k')], ['Eksik modeli olan bayi · Genel (Bajaj + Kanuni)', all.length - c('a')], ['Güncel veri girişi', dataStamp(ds.asOf)]].forEach(function (r) { w1.addRow(r); });
+    widths(w1, [52, 70]);
+    var st = function (m) { return m.length ? m.length + ' eksik' : 'Eksiksiz'; };
+    var wl = wb.addWorksheet('Bayi Listesi');
+    wl.addRow(['Bayi Adı', 'İl', 'Temsilci', 'Bajaj', 'Kanuni', 'Genel', 'Eksik modeller']);
+    rows.forEach(function (r) { wl.addRow([r.d.n, r.d.s, r.d.pl, st(r.b), st(r.k), st(r.a), r.a.length ? missBrandTxt(r.a).map(function (x) { return x[0] + ': ' + x[1]; }).join(' | ') : '']); });
+    widths(wl, [34, 14, 18, 12, 12, 12, 70]); wl.views = [{ state: 'frozen', ySplit: 1 }];
+    var wm = wb.addWorksheet('Model Durumu');
+    wm.addRow(['Bayi Adı', 'İl', 'Marka', 'Model', 'Durum', 'Faturalı', 'Konsinye', 'Toplam']);
+    rows.forEach(function (r) { ekModelLines(r.d).forEach(function (x) { wm.addRow([r.d.n, r.d.s, x.b, x.n, x.ok ? 'Var' : 'Yok', x.ok ? x.f : '', x.ok ? x.k : '', x.ok ? x.t : '']); }); });
+    widths(wm, [34, 14, 10, 22, 9, 11, 11, 11]); wm.views = [{ state: 'frozen', ySplit: 1 }]; wm.autoFilter = { from: 'A1', to: 'H1' };
+    return numberSheets(polish(wb));
+  }
+  async function ekExport(kind) {
+    var base = 'eksik-modeli-olmayan-bayiler-' + S.ef + '-' + slug(S.eb === 'ALL' ? 'genel' : S.eb) + (S.pk === 'ALL' ? '' : '-' + slug(S.pk)) + (S.eq ? '-' + slug(S.eq) : '') + '-' + stamp(), name, ok;
+    busy('#ekBody .tbar button', true);
+    try {
+      if (kind === 'xlsx') { name = base + '.xlsx'; var buf = await buildEkWorkbook().xlsx.writeBuffer(); ok = await saveFile(name, buf, XLSX_MIME, true); }
+      else if (kind === 'html') { name = base + '.html'; ok = await saveFile(name, ekSnapshot(), 'text/html', true); }
+      else { await loadPdf(); name = base + '.pdf'; ok = await saveFile(name, pdfEk().output('arraybuffer'), 'application/pdf', true); }
+      if (ok) toast('Dosya hazır: ' + name);
+    } catch (e) { if (!e || e.code !== 'declined') toast('Dosya oluşturulamadı' + (e && e.message ? ': ' + e.message : '')); }
+    finally { busy('#ekBody .tbar button', false); }
+  }
+
   function mstokData() {
     var mods = visModels(), rows = visDealers(mods), sp = !!ds.stats.split, ys = SY();
     var list = mods.map(function (i) {
@@ -2917,7 +3146,7 @@ span.no { margin-right: 5px; }
   }
   seg('brandSeg', 'brand'); seg('viewSeg', 'view'); seg('repSeg', 'dlRep');
   $('selPk').addEventListener('change', function (e) { S.pk = e.target.value; render(); });
-  [['qMode', 'qm', 'q', 'qLbl', function () { render(); }], ['aqMode', 'aqm', 'aq', 'aqLbl', function () { renderAnaliz(); }], ['kqMode', 'kqm', 'kq', 'kqLbl', function () { renderKarne(); }]].forEach(function (a) {
+  [['qMode', 'qm', 'q', 'qLbl', function () { render(); }], ['aqMode', 'aqm', 'aq', 'aqLbl', function () { renderAnaliz(); }], ['kqMode', 'kqm', 'kq', 'kqLbl', function () { renderKarne(); }], ['eqMode', 'eqm', 'eq', 'eqLbl', function () { renderEk(); }]].forEach(function (a) {
     $(a[0]).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S[a[1]] = b.dataset.v; syncMode(a[0], a[1], a[2], a[3]); a[4](); });
     syncMode(a[0], a[1], a[2], a[3]);
   });
@@ -2959,6 +3188,16 @@ span.no { margin-right: 5px; }
     if (b.dataset.mexp) { mstokExport(b.dataset.mexp); return; }
     if (b.dataset.mopen) { S.mOpen = !S.mOpen; renderMStok(); return; }
     applySort(b.dataset.sort); renderMStok();
+  });
+  [['efSeg', 'ef'], ['ebSeg', 'eb']].forEach(function (a) {
+    $(a[0]).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S[a[1]] = b.dataset.v; renderEk(); });
+  });
+  var eqt; $('eq').addEventListener('input', function (e) { clearTimeout(eqt); eqt = setTimeout(function () { S.eq = e.target.value; renderEk(); }, 120); });
+  $('ekBody').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-eexp],[data-eopen]');
+    if (!b) return;
+    if (b.dataset.eexp) { ekExport(b.dataset.eexp); return; }
+    S.eOpen = !S.eOpen; renderEk();
   });
   $('selKarne').addEventListener('change', function (e) { S.kd = e.target.value; renderKarne(); });
   var kqt; $('kq').addEventListener('input', function (e) { clearTimeout(kqt); kqt = setTimeout(function () { S.kq = e.target.value; renderKarne(); }, 120); });
