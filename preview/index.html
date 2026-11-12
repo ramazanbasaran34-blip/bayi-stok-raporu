@@ -126,6 +126,9 @@ button { cursor: pointer; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .seg button { border: 0; background: transparent; min-height: 46px; padding: 0 16px; font-weight: 600; font-size: 16px; color: var(--fg-2); }
 .seg button + button { border-left: 1px solid var(--line); }
+.seg .bd { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.25); }
+.seg .bd.g { background: #2e9d4f; }
+.seg .bd.y { background: #f2c230; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
 .field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .field label, .field .lbl { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-3); font-family: var(--font-head); font-weight: 600; }
@@ -731,6 +734,14 @@ span.no { margin-right: 5px; }
       <label for="selPk">Plasiyer</label>
       <select id="selPk"></select>
     </div>
+    <div class="field" id="bolgeField">
+      <span class="lbl">Bölge rengi</span>
+      <div class="seg" id="bolgeSeg" role="group" aria-label="Bölge rengi">
+        <button type="button" data-v="ALL" aria-pressed="true">Tümü</button>
+        <button type="button" data-v="G" aria-pressed="false"><i class="bd g"></i>Yeşil · Önemli bölge</button>
+        <button type="button" data-v="Y" aria-pressed="false"><i class="bd y"></i>Sarı · Düşük satış bölgesi</button>
+      </div>
+    </div>
     <div class="field grow" id="qField">
       <label for="q" id="qLbl">Bayi adı ile ara</label>
       <div class="srow"><div class="seg" id="qMode" role="group" aria-label="Arama türü"><button type="button" data-v="name" aria-pressed="true">Bayi adı</button><button type="button" data-v="city" aria-pressed="false">Şehir</button></div>
@@ -1177,12 +1188,28 @@ span.no { margin-right: 5px; }
   var EXCLUDED = ['NEV 50', 'REHA 250', 'TRODON SX', 'TRODON SX 125', 'eTRODON'];
   /* Pasif bayiler (cari kodu). Raporda ve Excel çıktısında gösterilmez. Listeye kod ekleyerek yeni pasif bayi tanımlanır. */
   var PASSIVE = ['MY001350', 'MY002227', 'MY003086', 'MY003096', 'MY003135', 'MY000071'];
+  /* Bölge rengi tablosu (81 il): G = Yeşil · Önemli bölge, Y = Sarı · Düşük satış bölgesi.
+     İlde bugün bayi olmasa bile tabloda durur; ileride gelen bayi ilinin rengini otomatik alır. */
+  var BOLGE_TBL = [['Uşak','Y'],['Tokat','Y'],['Burdur','Y'],['Kırklareli','Y'],['Amasya','Y'],['Ordu','Y'],['Mardin','Y'],['Sivas','Y'],['Kastamonu','Y'],['Adıyaman','Y'],['Sinop','Y'],['Karaman','Y'],['Yozgat','Y'],['Çankırı','Y'],['Kırıkkale','Y'],['Bilecik','Y'],['Kilis','Y'],['Batman','Y'],['Erzurum','Y'],['Elazığ','Y'],['Erzincan','Y'],['Bartın','Y'],['Kırşehir','Y'],['Şırnak','Y'],['Giresun','Y'],['Van','Y'],['Karabük','Y'],['Iğdır','Y'],['Rize','Y'],['Siirt','Y'],['Ağrı','Y'],['Kars','Y'],['Bitlis','Y'],['Gümüşhane','Y'],['Muş','Y'],['Bayburt','Y'],['Hakkari','Y'],['Bingöl','Y'],['Artvin','Y'],['Ardahan','Y'],['Tunceli','Y'],['İstanbul','G'],['İzmir','G'],['Antalya','G'],['Manisa','G'],['Bursa','G'],['Konya','G'],['Aydın','G'],['Balıkesir','G'],['Adana','G'],['Muğla','G'],['Ankara','G'],['Hatay','G'],['Mersin','G'],['Denizli','G'],['Gaziantep','G'],['Kocaeli','G'],['Çanakkale','G'],['Afyonkarahisar','G'],['Sakarya','G'],['Samsun','G'],['Kayseri','G'],['Tekirdağ','G'],['Kütahya','G'],['Şanlıurfa','G'],['Eskişehir','G'],['Isparta','G'],['Aksaray','G'],['Osmaniye','G'],['Kahramanmaraş','G'],['Edirne','G'],['Niğde','G'],['Zonguldak','G'],['Nevşehir','G'],['Çorum','G'],['Düzce','G'],['Yalova','G'],['Trabzon','G'],['Diyarbakır','G'],['Malatya','G'],['Bolu','G']];
+  var BOLGE_ALIAS = [['afyon', 'afyonkarahisar'], ['k.maras', 'kahramanmaras'], ['k. maras', 'kahramanmaras'], ['kmaras', 'kahramanmaras'], ['urfa', 'sanliurfa'], ['icel', 'mersin'], ['antep', 'gaziantep']];
+  var BOLGE = null;
+  function bolgeMap() {
+    if (BOLGE) return BOLGE;
+    BOLGE = {};
+    BOLGE_TBL.forEach(function (x) { BOLGE[core.norm(x[0])] = x[1]; });
+    BOLGE_ALIAS.forEach(function (a) { if (BOLGE[a[1]]) BOLGE[a[0]] = BOLGE[a[1]]; });
+    return BOLGE;
+  }
+  function bolgeOf(d) { return bolgeMap()[core.norm(d.s)] || null; }
+  function bolgeOn() { return S.bolge !== 'ALL' && S.menu !== 'indir' && S.menu !== 'karne'; }
+  function bolgeOk(d) { return !bolgeOn() || bolgeOf(d) === S.bolge; }
+  function bolgeTxt() { return S.bolge === 'G' ? 'Bölge: Yeşil · Önemli bölge' : 'Bölge: Sarı · Düşük satış bölgesi'; }
   var passiveSeen = [];
   var core = window.ReportCore;
   var ds = null, raw = null;
   var STANDALONE = true;
   var STATIC = false;
-  var S = { menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', qm: 'name', aqm: 'name', kqm: 'name', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' }, mstok: { key: 't', dir: 'desc' } }, mOpen: false, ef: 'none', eb: 'ALL', eq: '', eqm: 'name', eOpen: false };
+  var S = { bolge: 'ALL', menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', qm: 'name', aqm: 'name', kqm: 'name', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' }, mstok: { key: 't', dir: 'desc' } }, mOpen: false, ef: 'none', eb: 'ALL', eq: '', eqm: 'name', eOpen: false };
   var $ = function (id) { return document.getElementById(id); };
   var norm = core.norm;
   var fmt = function (n) { return Number(n).toLocaleString('tr-TR'); };
@@ -1241,6 +1268,7 @@ span.no { margin-right: 5px; }
   function visDealers(mods, ignoreQ) {
     var list = ds.dealers.filter(function (d) {
       if (S.pk !== 'ALL' && d.pk !== S.pk) return false;
+      if (!bolgeOk(d)) return false;
       if (!ignoreQ && !qMatch(d)) return false;
       return true;
     });
@@ -1538,6 +1566,7 @@ span.no { margin-right: 5px; }
     $('kpis').hidden = ind || ana || kar || mst || eks; $('main').hidden = ind || dur || ana || kar || mst || eks; $('coverage').hidden = ind || dur || ana || kar || mst || eks;
     $('repField').hidden = !ind; $('mainPdfBar').hidden = ind || ana || kar || mst || eks; $('qField').hidden = ind || dur || ana || kar || eks; $('brandField').hidden = ana || kar || eks;
     $('viewField').hidden = rp !== 'eksik';
+    $('bolgeField').hidden = ind || kar;
     $('legend').hidden = ind || v !== 'matrix';
     $('onlyWrap').hidden = v !== 'matrix';
     var sp = !!ds.stats.split, anyUnk = ds.dealers.some(function (d) { return !known(d); });
@@ -1858,7 +1887,7 @@ span.no { margin-right: 5px; }
     var brandTxt = S.brand === 'ALL' ? 'Bajaj + Kanuni' : S.brand === 'BAJAJ' ? 'Bajaj' : 'Kanuni';
     var pl = S.pk === 'ALL' ? 'Tüm plasiyerler' : (plasiyers().filter(function (p) { return p.pk === S.pk; }).map(function (p) { return p.pk + ' · ' + p.pl; })[0] || S.pk);
     var viewTxt = curRep() === 'stok' ? '' : ({ matrix: 'Tablo', bayi: 'Bayiye göre eksikler', model: 'Modele göre eksikler' })[S.view];
-    var info = [brandTxt, pl].join(' · ');
+    var info = [brandTxt, pl].concat(bolgeOn() ? [bolgeTxt()] : []).join(' · ');
     var css = Array.prototype.map.call(document.querySelectorAll('style'), function (s) { return s.textContent; }).join('\n');
     var body, script = '';
     var keep = { tab: S.stokTab, open: S.openAll, q: S.q };
@@ -1955,7 +1984,7 @@ span.no { margin-right: 5px; }
   function allMods() { return visModels('ALL'); }
   function dealerByCode(c) { return ds.dealers.filter(function (d) { return d.c === c; })[0] || null; }
   function brandTxt() { return S.brand === 'ALL' ? 'Bajaj + Kanuni' : S.brand === 'BAJAJ' ? 'Bajaj' : 'Kanuni'; }
-  function pkTxt() { return S.pk === 'ALL' ? 'Tüm plasiyerler' : (plasiyers().filter(function (p) { return p.pk === S.pk; }).map(function (p) { return p.pk + ' · ' + p.pl; })[0] || S.pk); }
+  function pkTxt() { return (S.pk === 'ALL' ? 'Tüm plasiyerler' : (plasiyers().filter(function (p) { return p.pk === S.pk; }).map(function (p) { return p.pk + ' · ' + p.pl; })[0] || S.pk)) + (bolgeOn() ? ' · ' + bolgeTxt() : ''); }
   function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
 
   /* ----- satış verisi (Bajaj + Kanuni) ----- */
@@ -2097,7 +2126,7 @@ span.no { margin-right: 5px; }
   function dbSums(rows) { return DBN.map(function (i) { return dsum(rows, 'd' + i); }); }
   function dsum(rows, k) { return rows.some(function (r) { return r[k] != null; }) ? Math.round(sum(rows.map(function (r) { return r[k] || 0; })) * 100) / 100 : null; }
   function analizRows() {
-    var list = ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && aMatch(d); }).map(mkRow);
+    var list = ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && bolgeOk(d) && aMatch(d); }).map(mkRow);
     return sortList(list, 'analiz', function (x) { return x.d.n; }, function (x, k) { return x[k] == null ? -1 : x[k]; });
   }
   /* kaynak dosya yüklüyse toplam, yoksa null */
@@ -2995,7 +3024,7 @@ span.no { margin-right: 5px; }
   var EKK = { BAJAJ: 'b', 'KANUNİ': 'k', ALL: 'a' };
   function ekRows() {
     var mods = { b: visModels('BAJAJ'), k: visModels('KANUNİ'), a: visModels('ALL') };
-    return ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && searchMatch(d, S.eq, S.eqm); })
+    return ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && bolgeOk(d) && searchMatch(d, S.eq, S.eqm); })
       .slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'tr'); })
       .map(function (d) {
         var o = { d: d };
@@ -3312,7 +3341,7 @@ span.no { margin-right: 5px; }
       render();
     });
   }
-  seg('brandSeg', 'brand'); seg('viewSeg', 'view'); seg('repSeg', 'dlRep');
+  seg('bolgeSeg', 'bolge'); seg('brandSeg', 'brand'); seg('viewSeg', 'view'); seg('repSeg', 'dlRep');
   $('selPk').addEventListener('change', function (e) { S.pk = e.target.value; render(); });
   [['qMode', 'qm', 'q', 'qLbl', function () { render(); }], ['aqMode', 'aqm', 'aq', 'aqLbl', function () { renderAnaliz(); }], ['kqMode', 'kqm', 'kq', 'kqLbl', function () { renderKarne(); }], ['eqMode', 'eqm', 'eq', 'eqLbl', function () { renderEk(); }]].forEach(function (a) {
     $(a[0]).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S[a[1]] = b.dataset.v; syncMode(a[0], a[1], a[2], a[3]); a[4](); });
@@ -3324,7 +3353,7 @@ span.no { margin-right: 5px; }
   $('main').addEventListener('click', function (e) {
     var b = e.target.closest('[data-sort],[data-tab],#btnOpenAll,#btnClearF');
     if (!b) return;
-    if (b.id === 'btnClearF') { S.pk = 'ALL'; S.onlyMiss = false; $('selPk').value = 'ALL'; $('onlyMiss').checked = false; render(); return; }
+    if (b.id === 'btnClearF') { S.pk = 'ALL'; S.bolge = 'ALL'; Array.prototype.forEach.call($('bolgeSeg').children, function (x) { x.setAttribute('aria-pressed', x.dataset.v === 'ALL' ? 'true' : 'false'); }); S.onlyMiss = false; $('selPk').value = 'ALL'; $('onlyMiss').checked = false; render(); return; }
     if (b.id === 'btnOpenAll') { S.openAll = !S.openAll; render(); return; }
     if (b.dataset.tab) { S.stokTab = b.dataset.tab; render(); return; }
     var p = b.dataset.sort.split(':'), st = S.sort[p[0]];
