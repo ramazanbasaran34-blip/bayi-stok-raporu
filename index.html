@@ -191,6 +191,8 @@ table.mx { border-collapse: separate; border-spacing: 0; font-variant-numeric: t
 .chip.nb { background: var(--surface-2); color: var(--fg); box-shadow: none; }
 .chip .br { opacity: .8; font-size: 12.5px; margin-right: 4px; }
 .subl { font-size: 14.5px; color: var(--fg-2); margin-top: 8px; }
+.dbsl { display: flex; flex-wrap: wrap; gap: 2px 20px; margin-top: 6px; font-size: 15px; color: var(--fg-2); }
+.dbsl b { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
 .grouph { font-family: var(--font-head); font-weight: 600; font-size: 15px; color: var(--fg-2); letter-spacing: .04em; text-transform: uppercase; margin: 10px 2px 0; }
 .empty { font-size: 17px; padding: 28px 16px; text-align: center; color: var(--fg-2); }
 
@@ -386,6 +388,7 @@ table.mx { width: 100%; min-width: 0; }
 .list.cl .card h3 { font-size: 15px; gap: 2px 8px; }
 .list.cl .card h3 small { font-size: 12px; }
 .list.cl .subl { font-size: 12.5px; margin-top: 4px; }
+  .dbsl { font-size: 10.5px !important; margin-top: 2px !important; gap: 0 14px !important; }
 .list.cl .chips { gap: 3px 4px; margin-top: 3px !important; }
 .list.cl .chip { padding: 1px 6px; font-size: 12px; border-radius: 5px; line-height: 1.35; font-weight: 500; }
 .list.cl .chip .br { font-size: 9.5px; margin-right: 3px; }
@@ -1449,6 +1452,11 @@ span.no { margin-right: 5px; }
     return h;
   }
 
+  /* DBS özeti (Eksik Modeller · Bayiye göre): Tanımlı DBS ve Toplam KDV Dahil */
+  function dbsLine(d) {
+    if (!d.dbs || d.dbs.length !== 6) return '';
+    return '<div class="dbsl"><span>Tanımlı DBS: <b>' + esc(fmt(Math.round(d.dbs[0]))) + ' TL</b></span><span>Toplam KDV Dahil: <b>' + esc(fmt(Math.round(d.dbs[4]))) + ' TL</b></span></div>';
+  }
   function listByBayi(mods, rows) {
     var sel = S.q ? rows : rows.filter(function (r) { return r.miss || r.unk; });
     if (!rows.length && S.q) return '<div class="panel empty">' + noMatchMsg() + '</div>';
@@ -1463,7 +1471,7 @@ span.no { margin-right: 5px; }
         var chip = '<span class="chip' + (s === 'unk' ? ' unk' : '') + '"><span class="br">' + esc(m.b === 'BAJAJ' ? 'Bajaj' : 'Kanuni') + '</span>' + esc(m.n) + '</span>';
         if (s === 'miss') missC += chip; else if (s === 'unk') unkC += chip;
       });
-      h += '<div class="card"><h3><span class="no">' + (ri + 1) + '.</span>' + esc(r.d.n) + '<small>' + (STATIC ? esc(cityPl(r.d)) : esc(r.d.s) + ' · ' + esc(r.d.c)) + '</small></h3>';
+      h += '<div class="card"><h3><span class="no">' + (ri + 1) + '.</span>' + esc(r.d.n) + '<small>' + (STATIC ? esc(cityPl(r.d)) : esc(r.d.s) + ' · ' + esc(r.d.c)) + '</small></h3>' + dbsLine(r.d);
       if (missC) h += '<div class="subl">Bayiye faturalı ve konsinye yok (' + r.miss + ')</div><div class="chips" style="margin-top:4px">' + missC + '</div>';
       if (unkC) h += '<div class="subl">Bayiye faturalı yok, stok bilgisi dosyada yok (' + r.unk + ')</div><div class="chips" style="margin-top:4px">' + unkC + '</div>';
       if (!missC && !unkC) h += '<div class="subl">Eksik model yok: tüm modeller bayide mevcut.</div>';
@@ -2845,9 +2853,11 @@ span.no { margin-right: 5px; }
         y = pdfKpis(doc, y, [{ v: fmt(sel.length), l: 'Bayi' }, { v: fmt(sum(sel.map(function (r) { return r.miss; }))), l: 'Toplam eksik model sayısı' }]);
         var bd2 = sel.map(function (r, ri) {
           var ml = mods.filter(function (i) { return status(r.d, i) === 'miss'; });
-          return [{ content: String(ri + 1), styles: { halign: 'center' } }, r.d.n + '\n' + cityPl(r.d), { content: String(r.miss), styles: { halign: 'center', fontStyle: 'bold' } }, ml.length ? modTxt(ml, false) : 'Eksik model yoktur'];
+          var dn = r.d.dbs && r.d.dbs.length === 6 ? r.d.dbs : null;
+          return [{ content: String(ri + 1), styles: { halign: 'center' } }, r.d.n + '\n' + cityPl(r.d), { content: dn ? fmt(Math.round(dn[0])) : '–', styles: { halign: 'center' } }, { content: dn ? fmt(Math.round(dn[4])) : '–', styles: { halign: 'center', fontStyle: 'bold' } }, { content: String(r.miss), styles: { halign: 'center', fontStyle: 'bold' } }, ml.length ? modTxt(ml, false) : 'Eksik model yoktur'];
         });
-        pdfTable(doc, y, { head: ['No', 'Bayi Adı', 'Eksik model sayısı', 'Bayiye faturalı ve konsinyede olmayan modeller'], body: bd2, foot: ['', { content: 'Toplam (' + sel.length + ' bayi)', styles: { halign: 'left' } }, { content: fmt(sum(sel.map(function (r) { return r.miss; }))), styles: { halign: 'center' } }, ''], cs: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 54 }, 2: { cellWidth: 22 } } });
+        var dsm = function (k) { return fmt(Math.round(sum(sel.map(function (r) { return r.d.dbs && r.d.dbs.length === 6 ? r.d.dbs[k] : 0; })))); };
+        pdfTable(doc, y, { head: ['No', 'Bayi Adı', 'Tanımlı DBS (TL)', 'Toplam KDV Dahil (TL)', 'Eksik model sayısı', 'Bayiye faturalı ve konsinyede olmayan modeller'], body: bd2, foot: ['', { content: 'Toplam (' + sel.length + ' bayi)', styles: { halign: 'left' } }, { content: dsm(0), styles: { halign: 'center' } }, { content: dsm(4), styles: { halign: 'center' } }, { content: fmt(sum(sel.map(function (r) { return r.miss; }))), styles: { halign: 'center' } }, ''], cs: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 46 }, 2: { cellWidth: 22 }, 3: { cellWidth: 24 }, 4: { cellWidth: 17 } } });
       }
     } else {
       var bd3 = [];
