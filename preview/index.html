@@ -1924,8 +1924,8 @@ span.no { margin-right: 5px; }
   function SY() {
     var m = {};
     BR.forEach(function (b) { var s = SRC(b); if (s && s.years) s.years.forEach(function (y) { m[y] = 1; }); });
-    var a = Object.keys(m).map(Number).sort();
-    return a.length ? a : [2025, 2026];
+    var a = Object.keys(m).map(Number).sort(function (x, y) { return y - x; });  /* en yeni yıl solda */
+    return a.length ? a : [2026, 2025];
   }
   function recOf(b, code) { var s = SRC(b); return s && s.d && s.d[code] ? s.d[code] : null; }
   /* Bayi satış dosyasında var ama o yıl satırı yoksa satış 0'dır; dosyada hiç yoksa null (–) */
@@ -1940,7 +1940,7 @@ span.no { margin-right: 5px; }
   /* Son yıl (tamamlanmamış) başlığında rapor tarihi yazar: "11.11.2026 Satış Adedi" */
   function yLabel(i) {
     var ys = SY(), a = salesAsOf();
-    if (a && i === ys.length - 1) return trDate(a) + ' Satış Adedi';
+    if (a && ys[i] === Math.max.apply(null, ys)) return trDate(a) + ' Satış Adedi';
     return ys[i] + ' Satış Adedi';
   }
   function nn(v) { return v == null ? '–' : fmt(v); }
@@ -2071,7 +2071,7 @@ span.no { margin-right: 5px; }
     return allMods().filter(function (i) { return total(d, i) <= 0; }).map(function (i) { return ds.models[i].n; });
   }
   /* Renk grupları: 1 = stok (mavi), 2 = ilk yıl satış (yeşil), 3 = son yıl satış (turuncu) */
-  function gOf(i) { return i === 0 ? 2 : 3; }
+  function gOf(i) { var ys = SY(); return ys[i] === Math.max.apply(null, ys) ? 3 : 2; }
   /* Üst özet: her kutuda Bajaj / Kanuni / Toplam birlikte */
   function summaryBoxes(rows) {
     var sp = !!ds.stats.split, ys = SY(), bx = [];
@@ -2201,7 +2201,7 @@ span.no { margin-right: 5px; }
       h += '</tbody><tfoot><tr><td class="l" colspan="3">Genel toplam</td>' + (sp ? '<td class="num">' + fmt(f) + '</td><td class="num">' + fmt(k) + '</td>' : '') + '<td class="num">' + fmt(t) + '</td></tr></tfoot></table></div></div>';
     }
     if (dbsShow(d)) h += dbsHtml(d);
-    var a = salesAsOf(), an = a ? '<div class="rnote">' + esc(ys[ys.length - 1]) + ' yılı tamamlanmadı: satışlar ' + esc(trDate(a)) + ' rapor tarihine kadardır.</div>' : '';
+    var a = salesAsOf(), an = a ? '<div class="rnote">' + esc(Math.max.apply(null, ys)) + ' yılı tamamlanmadı: satışlar ' + esc(trDate(a)) + ' rapor tarihine kadardır.</div>' : '';
     h += '</div><div><h3 class="rh3">Aylık satış adedi (Bajaj ve Kanuni)</h3><div class="panel"><div class="rwrap">' + monthTable(row) + '</div></div>' + salesMissNote(row) + an + eksikHtml(d) + '</div></div>';
     return h + '</div>';
   }
@@ -2446,7 +2446,7 @@ span.no { margin-right: 5px; }
       columnStyles: { 0: { cellWidth: 20, halign: 'left' } }
     });
     var y2 = doc.lastAutoTable.finalY + 3.5;
-    var note = salesAsOf() ? ys[ys.length - 1] + ' yılı tamamlanmadı: satışlar ' + trDate(salesAsOf()) + ' rapor tarihine kadardır.' : '';
+    var note = salesAsOf() ? Math.max.apply(null, ys) + ' yılı tamamlanmadı: satışlar ' + trDate(salesAsOf()) + ' rapor tarihine kadardır.' : '';
     var miss = BR.filter(function (b, bi) { return SRC(b) && !row.rec[bi]; }).map(function (b) { return b.n; });
     if (miss.length) note += (note ? ' ' : '') + 'Satış dosyasında ' + miss.join(' ve ') + ' satış kaydı yok (“–”).';
     var nl = [];
