@@ -595,7 +595,41 @@ details.sd[open]:nth-of-type(even) > summary { border-radius: 10px 10px 0 0; }
 .sdb .sg { padding-left: 6px; padding-right: 6px; margin: 0 -6px; }
 .sdb .sg:nth-child(odd):not(.sh):not(.tot) { background: var(--zebra); }
 .rt tbody tr:nth-child(even) td:not(.g1):not(.g2):not(.g3):not(.g4) { background: var(--zebra); }
-.rt.an td.nm1 { min-width: 290px; }
+.rt.an { font-size: 14px; }
+.rt.an th, .rt.an td { padding: 7px 4px; }
+.rt.an thead th { font-size: 12.5px; padding-left: 3px; padding-right: 3px; }
+.rt.an thead th.gh { font-size: 13px; }
+.rt.an thead th .hb { gap: 2px; }
+.rt.an td.nm1 { min-width: 0; width: 160px; max-width: 160px; padding-left: 8px; }
+.rt.an td.nm1 .lnk, .rt.an td.nm1 b { font-size: 14px; }
+.rt.an td.nm1 .sm { font-size: 12.5px; }
+.rt.an td.no, .rt.an th.no { padding-left: 6px; padding-right: 6px; }
+@media (max-width: 1450px) {
+  .rt.an { font-size: 13px; }
+  .rt.an th, .rt.an td { padding: 6px 3px; }
+  .rt.an thead th { font-size: 11.5px; padding-left: 2px; padding-right: 2px; }
+  .rt.an thead th.gh { font-size: 12px; }
+  .rt.an td.nm1 { width: 145px; max-width: 145px; padding-left: 6px; }
+  .rt.an td.nm1 .lnk, .rt.an td.nm1 b { font-size: 13px; }
+  .rt.an td.nm1 .sm { font-size: 11.5px; }
+}
+@media (max-width: 1380px) {
+  .rt.an { font-size: 12px; }
+  .rt.an th, .rt.an td { padding: 5px 2px; }
+  .rt.an thead th { font-size: 10.5px; padding-left: 1px; padding-right: 1px; }
+  .rt.an thead th.gh { font-size: 11px; }
+  .rt.an thead th .hb .ar { font-size: 9px; }
+  .rt.an td.nm1 { width: 125px; max-width: 125px; padding-left: 5px; }
+  .rt.an td.nm1 .lnk, .rt.an td.nm1 b { font-size: 12px; }
+  .rt.an td.nm1 .sm { font-size: 10.5px; }
+  .rt.an td.no, .rt.an th.no { padding-left: 3px; padding-right: 3px; }
+}
+@media (max-width: 1310px) {
+  .rt.an { font-size: 11.5px; }
+  .rt.an td.nm1 { width: 108px; max-width: 108px; }
+  .rt.an td.nm1 .lnk, .rt.an td.nm1 b { font-size: 11.5px; }
+  .rt.an td.nm1 .sm { font-size: 10px; }
+}
 @media print { .rt.an td.nm1 { min-width: 0; } }
 .rt tbody tr:nth-child(even) td.g4 { background: var(--zebra-g4); }
 .rt tbody tr:nth-child(even) td.g1 { background: var(--zebra-g1); }
@@ -2213,6 +2247,16 @@ span.no { margin-right: 5px; }
     if (!d && n > 1) h += b('pdfEach', 'Her bayi ayrı sayfa (PDF)');
     return h + '</div><div class="hint">Dosyalar farklı kaydet penceresiyle istediğiniz klasöre kaydedilir. PDF A4 yatay sayfadır.</div>';
   }
+  /* Geniş tabloyu ekrana yatayda sığdır: taşarsa yakınlaştırmayı küçült (en fazla %55) */
+  function fitAnaliz() {
+    var w = document.querySelector('#analizBody .rwrap'), tb = w && w.querySelector('table.an');
+    if (!tb) return;
+    tb.style.zoom = '';
+    if (window.innerWidth <= 760) return;
+    var cw = w.clientWidth, tw = tb.getBoundingClientRect().width;
+    if (tw > cw + 1) tb.style.zoom = String(Math.max(0.55, Math.floor(cw / tw * 100) / 100));
+  }
+  var fitT; window.addEventListener('resize', function () { clearTimeout(fitT); fitT = setTimeout(fitAnaliz, 120); });
   function renderAnaliz() {
     CTX = 'analiz';
     var d = S.aDealer ? dealerByCode(S.aDealer) : null;
@@ -2221,6 +2265,7 @@ span.no { margin-right: 5px; }
     if (d) { $('analizBody').innerHTML = analizToolbar(d, 1) + salesNote() + analizDetailHtml(d); return; }
     var rows = analizRows();
     $('analizBody').innerHTML = analizToolbar(null, rows.length) + '<div class="rintro"><b>Bayi Satış Adetleri ve Stokları</b><br><span>' + fmt(rows.length) + ' bayi · Stok ve satış adedi: Bajaj ve Kanuni ayrı ayrı, toplam birlikte. Bayi adına dokunun: model detayı ve aylık satışlar açılır. Bayi adı aratıp çıktı alırsanız model detayları çıktıya otomatik eklenir.</span></div>' + salesNote() + summaryHtml(summaryBoxes(rows)) + analizListHtml(rows);
+    fitAnaliz();
   }
 
   /* ----- Bayi Karnesi menüsü ----- */
