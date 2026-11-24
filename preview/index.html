@@ -136,7 +136,7 @@ button { cursor: pointer; }
 .lim.k { background: var(--miss-bg); color: var(--miss-fg); }
 .lim.u { background: var(--line); color: var(--fg-2); }
 .dlrow { display: grid; grid-template-columns: minmax(190px, .9fr) auto minmax(0, 3.6fr); gap: 8px 14px; align-items: center; }
-.dlrow .lim { margin-left: 0; }
+.dlrow .lim, .klim .lim { margin-left: 0; }
 .dlm { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: flex-end; }
 .dlmt { display: flex; flex-direction: column; align-items: flex-end; min-width: 76px; font-variant-numeric: tabular-nums; }
 .dlmt i { font-style: normal; font-size: 13px; color: var(--fg-2); }
@@ -2341,7 +2341,7 @@ span.no { margin-right: 5px; }
   function analizDetailHtml(d) {
     var sp = !!ds.stats.split, ms = detailModels(d), ys = SY(), row = mkRow(d);
     var f = sum(ms.map(function (r) { return r.f; })), k = sum(ms.map(function (r) { return r.k; })), t = sum(ms.map(function (r) { return r.t; }));
-    var h = '<div class="rdet"><div class="rhead"><div class="rkick">' + esc(titleOf()) + '</div><h2>' + esc(d.n) + '</h2><div class="rsub">' + esc(d.s) + ' · ' + esc(d.c) + ' · ' + esc(d.pk) + ' · ' + esc(d.pl) + '</div></div>' + summaryHtml(summaryBoxes([row]));
+    var h = '<div class="rdet"><div class="rhead"><div class="rkick">' + esc(titleOf()) + '</div><h2>' + esc(d.n) + '</h2><div class="rsub">' + esc(d.s) + ' · ' + esc(d.c) + ' · ' + esc(d.pk) + ' · ' + esc(d.pl) + (dbsShow(d) ? limChip(d) : '') + '</div></div>' + summaryHtml(summaryBoxes([row]));
     h += '<div class="rcols"><div><h3 class="rh3">Model detayları</h3>';
     if (!ms.length) h += '<div class="panel empty">Bu bayide stok yok.</div>';
     else {
@@ -2403,10 +2403,10 @@ span.no { margin-right: 5px; }
   function karneListHtml(rows) {
     var ys = SY();
     if (!rows.length) return '<div class="panel empty">' + (S.kq ? '“' + esc(S.kq) + '” aramasına uyan bayi bulunamadı.' + qHint(S.kqm) : 'Bu filtreyle bayi bulunamadı.') + '</div>';
-    var h = '<div class="panel"><div class="rwrap"><table class="rt kl"><thead><tr><th class="no">No</th><th class="l">Bayi Adı</th><th class="g1">Stok adedi</th><th>Eksik model</th>' + ys.map(function (y, i) { return '<th class="g' + gOf(i) + '">' + esc(yLabel(i)) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    var h = '<div class="panel"><div class="rwrap"><table class="rt kl"><thead><tr><th class="no">No</th><th class="l">Bayi Adı</th><th class="g1">Stok adedi</th><th>Eksik model</th><th>DBS limiti</th>' + ys.map(function (y, i) { return '<th class="g' + gOf(i) + '">' + esc(yLabel(i)) + '</th>'; }).join('') + '</tr></thead><tbody>';
     rows.forEach(function (r, ri) {
       var mc = missGroups(r.d).miss.length;
-      h += '<tr><td class="num no">' + (ri + 1) + '</td><td class="l nm1"><button type="button" class="lnk" data-kdealer="' + esc(r.d.c) + '">' + esc(r.d.n) + '</button><span class="sm">, ' + esc(r.d.s) + ', ' + esc(r.d.pl) + '</span></td><td class="num g1"><b>' + fmt(r.t) + '</b></td><td class="num">' + (mc ? '<b class="redn">' + mc + '</b>' : '<span class="na">Yok</span>') + '</td>';
+      h += '<tr><td class="num no">' + (ri + 1) + '</td><td class="l nm1"><button type="button" class="lnk" data-kdealer="' + esc(r.d.c) + '">' + esc(r.d.n) + '</button><span class="sm">, ' + esc(r.d.s) + ', ' + esc(r.d.pl) + '</span></td><td class="num g1"><b>' + fmt(r.t) + '</b></td><td class="num">' + (mc ? '<b class="redn">' + mc + '</b>' : '<span class="na">Yok</span>') + '</td><td class="num klim">' + limChip(r.d) + '</td>';
       ys.forEach(function (y, i) { h += '<td class="num g' + gOf(i) + '"><b>' + (r['st' + i] == null ? '<span class="na">–</span>' : fmt(r['st' + i])) + '</b></td>'; });
       h += '</tr>';
     });
@@ -2556,6 +2556,12 @@ span.no { margin-right: 5px; }
     var y = 24;
     doc.setFont('Inter', 'bold'); doc.setFontSize(8.5); tc(doc, GREY); doc.text(titleOf().toLocaleUpperCase('tr'), 14, y); y += 5.5;
     doc.setFontSize(14); tc(doc, NAVY); doc.text(d.n, 14, y);
+    if (dbsShow(d)) {
+      var lsx = limState(d), ltx = LIM_L[lsx], lx = 14 + doc.getTextWidth(d.n) + 4;
+      doc.setFontSize(8.5); var lw = doc.getTextWidth(ltx) + 6;
+      if (lsx === 'A') { doc.setFillColor(223, 242, 229); doc.setTextColor(27, 94, 47); } else if (lsx === 'K') { doc.setFillColor(252, 228, 225); doc.setTextColor(198, 47, 36); } else { doc.setFillColor(236, 238, 242); tc(doc, GREY); }
+      doc.roundedRect(lx, y - 4.3, lw, 6, 3, 3, 'F'); doc.text(ltx, lx + 3, y - .1); doc.setFontSize(14);
+    }
     doc.setFont('Inter', 'normal'); doc.setFontSize(9); tc(doc, GREY); doc.text(d.s + ' · ' + d.c + ' · ' + d.pk + ' · ' + d.pl, W - 14, y, { align: 'right' }); y += 5;
     y = pdfBoxes(doc, y, summaryBoxes([row]));
     var top = y;
@@ -2729,7 +2735,7 @@ span.no { margin-right: 5px; }
       var f = sum(ms.map(function (r) { return r.f; })), k = sum(ms.map(function (r) { return r.k; })), t = sum(ms.map(function (r) { return r.t; }));
       var w1 = wb.addWorksheet('Özet');
       w1.addRow(['Alan', 'Değer']);
-      [['Bayi Adı', d.n], ['Cari kodu', d.c], ['Şehir', d.s], ['Plasiyer', d.pk + ' ' + d.pl], ['Bajaj stok adedi', row.sb], ['Kanuni stok adedi', row.sk], ['Toplam stok adedi', row.t], ['Eksik model sayısı', missGroups(d).miss.length], ['Eksik modeller', missPlain(d)]].forEach(function (r) { w1.addRow(r); });
+      [['Bayi Adı', d.n], ['Cari kodu', d.c], ['Şehir', d.s], ['Plasiyer', d.pk + ' ' + d.pl]].concat(dbsShow(d) ? [['DBS limiti', LIM_L[limState(d)]]] : []).concat([['Bajaj stok adedi', row.sb], ['Kanuni stok adedi', row.sk], ['Toplam stok adedi', row.t], ['Eksik model sayısı', missGroups(d).miss.length], ['Eksik modeller', missPlain(d)]]).forEach(function (r) { w1.addRow(r); });
       if (sp) { w1.addRow(['Bayiye faturalı adet', f]); w1.addRow(['Konsinye adet', k]); }
       if (dbsShow(d)) { d.dbs.forEach(function (v, i) { w1.addRow(['DBS durumu · ' + DBS_L[i] + ' (TL)', v]); }); w1.addRow(['DBS durumu · Limit durumu', LIM_L[limState(d)]]); }
       var sh = salesHead(), sc = salesCells(row);
@@ -2763,12 +2769,12 @@ span.no { margin-right: 5px; }
     }
     var rows = rowsIn || analizRows();
     var wl = wb.addWorksheet(CTX === 'analiz' ? 'Satış ve Stok' : 'Bayi Karnesi');
-    wl.addRow(['Plasiyer', 'Bayi kodu', 'Bayi Adı', 'Şehir', 'Bajaj stok', 'Kanuni stok', 'Toplam stok'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(CTX === 'analiz' ? DBS_L.map(function (x) { return x + ' (TL)'; }) : []).concat(salesHead()).concat(['Eksik model sayısı', 'Eksik modeller']));
-    rows.forEach(function (r) { wl.addRow([r.d.pk + ' ' + r.d.pl, r.d.c, r.d.n, r.d.s, r.sb, r.sk, r.t].concat(sp ? [r.f, r.k] : []).concat(CTX === 'analiz' ? DBN.map(function (i) { return r['d' + i] == null ? '–' : r['d' + i]; }) : []).concat(salesCells(r)).concat([missGroups(r.d).miss.length, missPlain(r.d)])); });
+    wl.addRow(['Plasiyer', 'Bayi kodu', 'Bayi Adı', 'Şehir'].concat(CTX === 'karne' ? ['DBS limiti'] : []).concat(['Bajaj stok', 'Kanuni stok', 'Toplam stok']).concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(CTX === 'analiz' ? DBS_L.map(function (x) { return x + ' (TL)'; }) : []).concat(salesHead()).concat(['Eksik model sayısı', 'Eksik modeller']));
+    rows.forEach(function (r) { wl.addRow([r.d.pk + ' ' + r.d.pl, r.d.c, r.d.n, r.d.s].concat(CTX === 'karne' ? [LIM_L[limState(r.d)]] : []).concat([r.sb, r.sk, r.t]).concat(sp ? [r.f, r.k] : []).concat(CTX === 'analiz' ? DBN.map(function (i) { return r['d' + i] == null ? '–' : r['d' + i]; }) : []).concat(salesCells(r)).concat([missGroups(r.d).miss.length, missPlain(r.d)])); });
     var tot = { };
     ys.forEach(function (y, i) { BR.forEach(function (b, bi) { tot[sKey(bi, i)] = SRC(b) ? sSum(rows, bi, i) : null; }); });
-    wl.addRow(['Genel toplam', '', '', '', sum(rows.map(function (r) { return r.sb; })), sum(rows.map(function (r) { return r.sk; })), sum(rows.map(function (r) { return r.t; }))].concat(sp ? [sum(rows.map(function (r) { return r.f; })), sum(rows.map(function (r) { return r.k; }))] : []).concat(CTX === 'analiz' ? dbSums(rows) : []).concat(salesCells(tot)).concat(['', '']));
-    widths(wl, [26, 12, 32, 14, 11, 11, 12].concat(sp ? [11, 11] : []).concat(CTX === 'analiz' ? [18, 18, 18, 18, 20, 18] : []).concat(salesHead().map(function () { return 20; })).concat([14, 70]));
+    wl.addRow(['Genel toplam', '', '', ''].concat(CTX === 'karne' ? [''] : []).concat([sum(rows.map(function (r) { return r.sb; })), sum(rows.map(function (r) { return r.sk; })), sum(rows.map(function (r) { return r.t; }))].concat(sp ? [sum(rows.map(function (r) { return r.f; })), sum(rows.map(function (r) { return r.k; }))] : []).concat(CTX === 'analiz' ? dbSums(rows) : []).concat(salesCells(tot)).concat(['', ''])));
+    widths(wl, [26, 12, 32, 14].concat(CTX === 'karne' ? [13] : []).concat([11, 11, 12]).concat(sp ? [11, 11] : []).concat(CTX === 'analiz' ? [18, 18, 18, 18, 20, 18] : []).concat(salesHead().map(function () { return 20; })).concat([14, 70]));
     wl.views = [{ state: 'frozen', ySplit: 1, xSplit: 3 }];
     var wm = wb.addWorksheet('Model Detayları');
     wm.addRow(['Bayi kodu', 'Bayi Adı', 'Şehir', 'Marka', 'Model'].concat(sp ? ['Faturalı', 'Konsinye'] : []).concat(['Toplam']));
