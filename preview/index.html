@@ -129,6 +129,24 @@ button { cursor: pointer; }
 .seg .bd { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; border: 1px solid rgba(0,0,0,.25); }
 .seg .bd.g { background: #2e9d4f; }
 .seg .bd.y { background: #f2c230; }
+.seg .bd.r { background: #d64533; }
+.kbox.g4 { --gc: var(--g4); }
+.lim { display: inline-block; padding: 1px 11px; border-radius: 999px; font-size: .82em; font-weight: 700; line-height: 1.5; white-space: nowrap; vertical-align: middle; margin-left: 8px; }
+.lim.a { background: var(--both-bg); color: var(--both-fg); }
+.lim.k { background: var(--miss-bg); color: var(--miss-fg); }
+.lim.u { background: var(--line); color: var(--fg-2); }
+.dlrow { display: grid; grid-template-columns: minmax(190px, .9fr) auto minmax(0, 3.6fr); gap: 8px 14px; align-items: center; }
+.dlrow .lim { margin-left: 0; }
+.dlm { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: flex-end; }
+.dlmt { display: flex; flex-direction: column; align-items: flex-end; min-width: 76px; font-variant-numeric: tabular-nums; }
+.dlmt i { font-style: normal; font-size: 13px; color: var(--fg-2); }
+.dlmt b { font-size: 16px; font-weight: 700; }
+.dlmt.neg b { color: var(--miss-fg); }
+.dlmt.st b { color: var(--g1); }
+.dlmt.sl b { color: var(--g3); }
+.dlx .rhead { display: none; }
+.dlx { padding-top: 6px; }
+@media (max-width: 900px) { .dlrow { grid-template-columns: 1fr; } .dlm { justify-content: flex-start; } .dlmt { align-items: flex-start; } }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
 .field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .field label, .field .lbl { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-3); font-family: var(--font-head); font-weight: 600; }
@@ -391,7 +409,12 @@ table.mx { width: 100%; min-width: 0; }
 .list.cl .card h3 { font-size: 15px; gap: 2px 8px; }
 .list.cl .card h3 small { font-size: 12px; }
 .list.cl .subl { font-size: 12.5px; margin-top: 4px; }
+@media print {
   .dbsl { font-size: 10.5px !important; margin-top: 2px !important; gap: 0 14px !important; }
+  .dlrow { grid-template-columns: 1fr !important; }
+  .dlm { justify-content: flex-start !important; }
+  .dlmt i { font-size: 10px !important; } .dlmt b { font-size: 12px !important; } .dlmt { min-width: 70px !important; }
+}
 .list.cl .chips { gap: 3px 4px; margin-top: 3px !important; }
 .list.cl .chip { padding: 1px 6px; font-size: 12px; border-radius: 5px; line-height: 1.35; font-weight: 500; }
 .list.cl .chip .br { font-size: 9.5px; margin-right: 3px; }
@@ -706,6 +729,7 @@ span.no { margin-right: 5px; }
       <button type="button" role="tab" data-menu="stok" aria-selected="false">Bayi Stokları</button>
       <button type="button" role="tab" data-menu="mstok" aria-selected="false">Modele Göre Stoklar</button>
       <button type="button" role="tab" data-menu="analiz" aria-selected="false">Bayi Stok Analiz</button>
+      <button type="button" role="tab" data-menu="dbsl" aria-selected="false">DBS Limitleri</button>
       <button type="button" role="tab" data-menu="karne" aria-selected="false">Bayi Karnesi</button>
       <button type="button" role="tab" data-menu="indir" aria-selected="false">İndir</button>
     </div>
@@ -740,6 +764,14 @@ span.no { margin-right: 5px; }
         <button type="button" data-v="ALL" aria-pressed="true">Tümü</button>
         <button type="button" data-v="G" aria-pressed="false"><i class="bd g"></i>Yeşil · Önemli bölge</button>
         <button type="button" data-v="Y" aria-pressed="false"><i class="bd y"></i>Sarı · Düşük satış bölgesi</button>
+      </div>
+    </div>
+    <div class="field" id="dlimField">
+      <span class="lbl">DBS limiti</span>
+      <div class="seg" id="dlimSeg" role="group" aria-label="DBS limiti">
+        <button type="button" data-v="ALL" aria-pressed="true">Tümü</button>
+        <button type="button" data-v="A" aria-pressed="false"><i class="bd g"></i>Limit açık</button>
+        <button type="button" data-v="K" aria-pressed="false"><i class="bd r"></i>Limit kapalı</button>
       </div>
     </div>
     <div class="field grow" id="qField">
@@ -794,6 +826,28 @@ span.no { margin-right: 5px; }
       </div>
     </div>
     <div id="ekBody"></div>
+  </div>
+
+  <div id="dlPane" class="pane" hidden>
+    <div class="filters">
+      <div class="field">
+        <label for="dlSort">Sıralama</label>
+        <select id="dlSort">
+          <option value="name">Bayi adı (A → Z)</option>
+          <option value="fark_asc">Fark: en olumsuzdan</option>
+          <option value="fark_desc">Fark: en yüksekten</option>
+          <option value="kdv">Toplam KDV Dahil: çoktan aza</option>
+          <option value="stok">Stok: çoktan aza</option>
+          <option value="sat">Satış (son yıl): çoktan aza</option>
+        </select>
+      </div>
+      <div class="field grow">
+        <label for="dq" id="dqLbl">Bayi adı ile ara</label>
+        <div class="srow"><div class="seg" id="dqMode" role="group" aria-label="Arama türü"><button type="button" data-v="name" aria-pressed="true">Bayi adı</button><button type="button" data-v="city" aria-pressed="false">Şehir</button></div>
+        <input type="search" id="dq" placeholder="Örn. Kayalar, MY001405" autocomplete="off"></div>
+      </div>
+    </div>
+    <div id="dlBody"></div>
   </div>
 
   <div id="mstokPane" class="pane" hidden>
@@ -1215,13 +1269,23 @@ span.no { margin-right: 5px; }
   function bolgeOf(d) { return bolgeMap()[core.norm(d.s)] || null; }
   function bolgeOn() { return S.bolge !== 'ALL' && S.menu !== 'indir' && S.menu !== 'karne'; }
   function bolgeOk(d) { return !bolgeOn() || bolgeOf(d) === S.bolge; }
+  /* DBS limit durumu: Fark = DBS Limit - Toplam KDV Dahil. Fark en az LIM_MIN (en ucuz motor) değilse limit yoktur (Kapalı); en az LIM_MIN ise Açık. */
+  var LIM_MIN = 150000;
+  function limState(d) { return d && d.dbs && d.dbs.length === 6 ? (d.dbs[5] < LIM_MIN ? 'K' : 'A') : 'U'; }
+  var LIM_L = { A: 'Limit Açık', K: 'Limit Kapalı', U: 'Limit bilgisi yok' };
+  function limChip(d) { var s = limState(d); return '<span class="lim ' + s.toLowerCase() + '">' + LIM_L[s] + '</span>'; }
+  function dlimOn() { return S.dlim !== 'ALL' && S.menu !== 'indir' && S.menu !== 'karne'; }
+  function dlimOk(d) { return !dlimOn() || limState(d) === S.dlim; }
+  function dlimTxt() { return 'DBS limiti: ' + (S.dlim === 'A' ? 'Açık' : 'Kapalı'); }
+  function fOk(d) { return bolgeOk(d) && dlimOk(d); }
+  function fTxts() { var a = []; if (bolgeOn()) a.push(bolgeTxt()); if (dlimOn()) a.push(dlimTxt()); return a; }
   function bolgeTxt() { return S.bolge === 'G' ? 'Bölge: Yeşil · Önemli bölge' : 'Bölge: Sarı · Düşük satış bölgesi'; }
   var passiveSeen = [];
   var core = window.ReportCore;
   var ds = null, raw = null;
   var STANDALONE = true;
   var STATIC = false;
-  var S = { bolge: 'ALL', menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', qm: 'name', aqm: 'name', kqm: 'name', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' }, mstok: { key: 't', dir: 'desc' } }, mOpen: false, ef: 'none', eb: 'ALL', eq: '', eqm: 'name', eOpen: false };
+  var S = { bolge: 'ALL', dlim: 'ALL', dq: '', dqm: 'name', dsort: 'name', dlOpen: false, menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', qm: 'name', aqm: 'name', kqm: 'name', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' }, mstok: { key: 't', dir: 'desc' } }, mOpen: false, ef: 'none', eb: 'ALL', eq: '', eqm: 'name', eOpen: false };
   var $ = function (id) { return document.getElementById(id); };
   var norm = core.norm;
   var fmt = function (n) { return Number(n).toLocaleString('tr-TR'); };
@@ -1280,7 +1344,7 @@ span.no { margin-right: 5px; }
   function visDealers(mods, ignoreQ) {
     var list = ds.dealers.filter(function (d) {
       if (S.pk !== 'ALL' && d.pk !== S.pk) return false;
-      if (!bolgeOk(d)) return false;
+      if (!fOk(d)) return false;
       if (!ignoreQ && !qMatch(d)) return false;
       return true;
     });
@@ -1360,7 +1424,7 @@ span.no { margin-right: 5px; }
       var st = S.sort.bayi, flat = st.key !== 'default' || STATIC;
       var head = '<div class="sg head' + one + '">' + hdrBtn('bayi', 'Bayi Adı', 'name') + (sp ? hdrBtn('bayi', 'Faturalı', 'f', 'n') + hdrBtn('bayi', 'Konsinye', 'k', 'n') : '') + hdrBtn('bayi', 'Toplam', 't', 'n') + '</div>';
       var one1 = function (x, withPk) {
-        var o = '<details class="sd"' + (S.openAll ? ' open' : '') + '><summary class="sg' + one + '"><span class="nm"><b><span class="no">' + (++cnt) + '.</span>' + esc(x.d.n) + '</b><small>' + (STATIC ? esc(cityPl(x.d)) : (withPk ? esc(x.d.pk) + ' · ' : '') + esc(x.d.s) + ' · ' + esc(x.d.c)) + '</small></span>' + nums(x.s) + '</summary><div class="sdb">';
+        var o = '<details class="sd"' + (S.openAll ? ' open' : '') + '><summary class="sg' + one + '"><span class="nm"><b><span class="no">' + (++cnt) + '.</span>' + esc(x.d.n) + '</b><small>' + (STATIC ? esc(cityPl(x.d)) : (withPk ? esc(x.d.pk) + ' · ' : '') + esc(x.d.s) + ' · ' + esc(x.d.c)) + '</small>' + limChip(x.d) + '</span>' + nums(x.s) + '</summary><div class="sdb">';
         o += '<div class="sg' + one + ' sh"><span>Model</span>' + (sp ? '<span class="n">Faturalı</span><span class="n">Konsinye</span>' : '') + '<span class="n">Toplam</span></div>';
         var any = false;
         mods.forEach(function (i) {
@@ -1477,7 +1541,7 @@ span.no { margin-right: 5px; }
         h += '<tr class="grp"><td colspan="' + n + '"><span>' + esc(cur) + ' · ' + esc(r.d.pl) + ' · ' + grp.length + ' bayi · ' + gm + ' eksik</span></td></tr>';
       }
       h += '<tr><th class="dealer" scope="row"><div class="dn"><span><span class="no">' + (ri + 1) + '.</span>' + esc(r.d.n) + '</span>' + (r.miss ? '<span class="pill">' + r.miss + '</span>' : '') + '</div>' +
-        '<div class="dm">' + (STATIC ? esc(cityPl(r.d)) : esc(r.d.s) + ' · ' + esc(r.d.c)) + (known(r.d) ? '' : '<span class="tag">stok bilgisi yok</span>') + '</div></th>';
+        '<div class="dm">' + (STATIC ? esc(cityPl(r.d)) : esc(r.d.s) + ' · ' + esc(r.d.c)) + limChip(r.d) + (known(r.d) ? '' : '<span class="tag">stok bilgisi yok</span>') + '</div></th>';
       mods.forEach(function (i) {
         var s = status(r.d, i), inner, cls = s;
         if (s === 'miss') inner = 'YOK';
@@ -1495,7 +1559,7 @@ span.no { margin-right: 5px; }
   /* DBS özeti (Eksik Modeller · Bayiye göre): Tanımlı DBS ve Toplam KDV Dahil */
   function dbsLine(d) {
     if (!d.dbs || d.dbs.length !== 6) return '';
-    return '<div class="dbsl"><span>Tanımlı DBS: <b>' + esc(fmt(Math.round(d.dbs[0]))) + ' TL</b></span><span>Toplam KDV Dahil: <b>' + esc(fmt(Math.round(d.dbs[4]))) + ' TL</b></span></div>';
+    return '<div class="dbsl"><span>Tanımlı DBS: <b>' + esc(fmt(Math.round(d.dbs[0]))) + ' TL</b></span><span>Toplam KDV Dahil: <b>' + esc(fmt(Math.round(d.dbs[4]))) + ' TL</b></span><span>DBS limiti:' + limChip(d) + '</span></div>';
   }
   function listByBayi(mods, rows) {
     var sel = S.q ? rows : rows.filter(function (r) { return r.miss || r.unk; });
@@ -1570,15 +1634,15 @@ span.no { margin-right: 5px; }
 
   function render() {
     if (!ds) return;
-    var ind = S.menu === 'indir', dur = S.menu === 'durum', ana = S.menu === 'analiz', kar = S.menu === 'karne', mst = S.menu === 'mstok', eks = S.menu === 'eks', rp = curRep(), v = curView();
+    var ind = S.menu === 'indir', dur = S.menu === 'durum', ana = S.menu === 'analiz', kar = S.menu === 'karne', mst = S.menu === 'mstok', eks = S.menu === 'eks', dbl = S.menu === 'dbsl', rp = curRep(), v = curView();
     Array.prototype.forEach.call($('nav').children, function (b) { b.setAttribute('aria-selected', b.dataset.menu === S.menu ? 'true' : 'false'); });
     Array.prototype.forEach.call($('repSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.v === S.dlRep ? 'true' : 'false'); });
-    document.querySelector('.wrap > .info').hidden = ana || kar || mst || eks;
-    $('indirPane').hidden = !ind; $('analizPane').hidden = !ana; $('karnePane').hidden = !kar; $('mstokPane').hidden = !mst; $('ekPane').hidden = !eks;
-    $('kpis').hidden = ind || ana || kar || mst || eks; $('main').hidden = ind || dur || ana || kar || mst || eks; $('coverage').hidden = ind || dur || ana || kar || mst || eks;
-    $('repField').hidden = !ind; $('mainPdfBar').hidden = ind || ana || kar || mst || eks; $('qField').hidden = ind || dur || ana || kar || eks; $('brandField').hidden = ana || kar || eks;
+    document.querySelector('.wrap > .info').hidden = ana || kar || mst || eks || dbl;
+    $('indirPane').hidden = !ind; $('analizPane').hidden = !ana; $('karnePane').hidden = !kar; $('mstokPane').hidden = !mst; $('ekPane').hidden = !eks; $('dlPane').hidden = !dbl;
+    $('kpis').hidden = ind || ana || kar || mst || eks || dbl; $('main').hidden = ind || dur || ana || kar || mst || eks || dbl; $('coverage').hidden = ind || dur || ana || kar || mst || eks || dbl;
+    $('repField').hidden = !ind; $('mainPdfBar').hidden = ind || ana || kar || mst || eks || dbl; $('qField').hidden = ind || dur || ana || kar || eks || dbl; $('brandField').hidden = ana || kar || eks || dbl;
     $('viewField').hidden = rp !== 'eksik';
-    $('bolgeField').hidden = ind || kar;
+    $('bolgeField').hidden = ind || kar; $('dlimField').hidden = ind || kar;
     $('legend').hidden = ind || v !== 'matrix';
     $('onlyWrap').hidden = v !== 'matrix';
     var sp = !!ds.stats.split, anyUnk = ds.dealers.some(function (d) { return !known(d); });
@@ -1592,6 +1656,7 @@ span.no { margin-right: 5px; }
     if (kar) { renderKarne(); return; }
     if (mst) { renderMStok(); return; }
     if (eks) { renderEk(); return; }
+    if (dbl) { renderDl(); return; }
     var c = compose();
     $('kpis').innerHTML = c.kpis;
     $('main').innerHTML = (c.hidden > 0 ? '<div class="notice" role="status"><b>' + c.hidden + ' bayi daha aramanıza uyuyor</b> ama seçili plasiyer veya &ldquo;Yalnız eksiği olan bayiler&rdquo; filtresi nedeniyle gizli. <button class="btn" type="button" id="btnClearF" style="margin-top:8px">Filtreleri kaldır</button></div>' : '') + c.main;
@@ -1899,7 +1964,7 @@ span.no { margin-right: 5px; }
     var brandTxt = S.brand === 'ALL' ? 'Bajaj + Kanuni' : S.brand === 'BAJAJ' ? 'Bajaj' : 'Kanuni';
     var pl = S.pk === 'ALL' ? 'Tüm plasiyerler' : (plasiyers().filter(function (p) { return p.pk === S.pk; }).map(function (p) { return p.pk + ' · ' + p.pl; })[0] || S.pk);
     var viewTxt = curRep() === 'stok' ? '' : ({ matrix: 'Tablo', bayi: 'Bayiye göre eksikler', model: 'Modele göre eksikler' })[S.view];
-    var info = [brandTxt, pl].concat(bolgeOn() ? [bolgeTxt()] : []).join(' · ');
+    var info = [brandTxt, pl].concat(fTxts()).join(' · ');
     var css = Array.prototype.map.call(document.querySelectorAll('style'), function (s) { return s.textContent; }).join('\n');
     var body, script = '';
     var keep = { tab: S.stokTab, open: S.openAll, q: S.q };
@@ -1990,13 +2055,13 @@ span.no { margin-right: 5px; }
   var NAVY = [18, 66, 122], HDR = [15, 47, 84], INK = [22, 32, 46], GREY = [75, 86, 103], LINEC = [217, 220, 227], SOFT = [236, 238, 242];
 
   var CTX = 'karne';
-  function titleOf() { return CTX === 'analiz' ? 'Bayi Satış Adetleri ve Stokları' : 'Bayi Karnesi'; }
+  function titleOf() { return CTX === 'analiz' ? 'Bayi Satış Adetleri ve Stokları' : CTX === 'dbsl' ? 'DBS Limitleri' : 'Bayi Karnesi'; }
   function bname(b) { return b === 'BAJAJ' ? 'Bajaj' : 'Kanuni'; }
   function trDate(iso) { var p = String(iso || '').split('-'); return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : ''; }
   function allMods() { return visModels('ALL'); }
   function dealerByCode(c) { return ds.dealers.filter(function (d) { return d.c === c; })[0] || null; }
   function brandTxt() { return S.brand === 'ALL' ? 'Bajaj + Kanuni' : S.brand === 'BAJAJ' ? 'Bajaj' : 'Kanuni'; }
-  function pkTxt() { return (S.pk === 'ALL' ? 'Tüm plasiyerler' : (plasiyers().filter(function (p) { return p.pk === S.pk; }).map(function (p) { return p.pk + ' · ' + p.pl; })[0] || S.pk)) + (bolgeOn() ? ' · ' + bolgeTxt() : ''); }
+  function pkTxt() { return (S.pk === 'ALL' ? 'Tüm plasiyerler' : (plasiyers().filter(function (p) { return p.pk === S.pk; }).map(function (p) { return p.pk + ' · ' + p.pl; })[0] || S.pk)) + fTxts().map(function (x) { return ' · ' + x; }).join(''); }
   function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
 
   /* ----- satış verisi (Bajaj + Kanuni) ----- */
@@ -2138,7 +2203,7 @@ span.no { margin-right: 5px; }
   function dbSums(rows) { return DBN.map(function (i) { return dsum(rows, 'd' + i); }); }
   function dsum(rows, k) { return rows.some(function (r) { return r[k] != null; }) ? Math.round(sum(rows.map(function (r) { return r[k] || 0; })) * 100) / 100 : null; }
   function analizRows() {
-    var list = ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && bolgeOk(d) && aMatch(d); }).map(mkRow);
+    var list = ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && fOk(d) && aMatch(d); }).map(mkRow);
     return sortList(list, 'analiz', function (x) { return x.d.n; }, function (x, k) { return x[k] == null ? -1 : x[k]; });
   }
   /* kaynak dosya yüklüyse toplam, yoksa null */
@@ -2248,10 +2313,10 @@ span.no { margin-right: 5px; }
   }
   /* DBS durumu: yalnız Bayi Karnesi'nde (ekran ve çıktılar) */
   var DBS_L = ['Tanımlı DBS', 'DBS Limit', 'Bayiye Faturalı', 'Konsinye', 'Toplam KDV Dahil', 'Fark'];
-  function dbsShow(d) { return CTX === 'karne' && d && d.dbs && d.dbs.length === 6; }
+  function dbsShow(d) { return (CTX === 'karne' || CTX === 'dbsl') && d && d.dbs && d.dbs.length === 6; }
   function tl(v) { return fmt(Math.round(v)) + ' TL'; }
   function dbsHtml(d) {
-    return '<div class="rdbs"><h3 class="rh3">DBS durumu</h3><div class="dbsbox">' + d.dbs.map(function (v, i) {
+    return '<div class="rdbs"><h3 class="rh3">DBS durumu' + limChip(d) + '</h3><div class="dbsbox">' + d.dbs.map(function (v, i) {
       return '<div class="dc"><span class="dl">' + esc(DBS_L[i]) + '</span><span class="dv' + (i === 5 && v < 0 ? ' neg' : '') + '">' + esc(tl(v)) + '</span></div>';
     }).join('') + '</div><div class="rnote">Tutarlar TL, KDV dahildir.</div></div>';
   }
@@ -2259,6 +2324,7 @@ span.no { margin-right: 5px; }
     var H = doc.internal.pageSize.getHeight(), bh = 17, cw = w / 3, rh = bh / 2;
     if (y + bh + 8 > H - 14) { doc.addPage(); y = 24; }
     doc.setFont('Inter', 'bold'); doc.setFontSize(11); tc(doc, NAVY); doc.text('DBS durumu', x, y + 3);
+    var ls = limState(d); doc.setFontSize(8.5); if (ls === 'A') doc.setTextColor(27, 94, 47); else if (ls === 'K') doc.setTextColor(198, 47, 36); else tc(doc, GREY); doc.text(LIM_L[ls], x + 26, y + 3); doc.setFontSize(11);
     doc.setFont('Inter', 'normal'); doc.setFontSize(7); tc(doc, GREY); doc.text('Tutarlar TL, KDV dahildir', x + w, y + 3, { align: 'right' });
     y += 5.5;
     doc.setFillColor(255, 255, 255); doc.setDrawColor(LINEC[0], LINEC[1], LINEC[2]); doc.setLineWidth(.25); doc.roundedRect(x, y, w, bh, 1.5, 1.5, 'FD');
@@ -2665,7 +2731,7 @@ span.no { margin-right: 5px; }
       w1.addRow(['Alan', 'Değer']);
       [['Bayi Adı', d.n], ['Cari kodu', d.c], ['Şehir', d.s], ['Plasiyer', d.pk + ' ' + d.pl], ['Bajaj stok adedi', row.sb], ['Kanuni stok adedi', row.sk], ['Toplam stok adedi', row.t], ['Eksik model sayısı', missGroups(d).miss.length], ['Eksik modeller', missPlain(d)]].forEach(function (r) { w1.addRow(r); });
       if (sp) { w1.addRow(['Bayiye faturalı adet', f]); w1.addRow(['Konsinye adet', k]); }
-      if (dbsShow(d)) d.dbs.forEach(function (v, i) { w1.addRow(['DBS durumu · ' + DBS_L[i] + ' (TL)', v]); });
+      if (dbsShow(d)) { d.dbs.forEach(function (v, i) { w1.addRow(['DBS durumu · ' + DBS_L[i] + ' (TL)', v]); }); w1.addRow(['DBS durumu · Limit durumu', LIM_L[limState(d)]]); }
       var sh = salesHead(), sc = salesCells(row);
       sh.forEach(function (lab, i) { w1.addRow([lab, sc[i]]); });
       w1.addRow(['Güncel veri girişi', dataStamp(ds.asOf)]);
@@ -2895,10 +2961,10 @@ span.no { margin-right: 5px; }
         var bd2 = sel.map(function (r, ri) {
           var ml = mods.filter(function (i) { return status(r.d, i) === 'miss'; });
           var dn = r.d.dbs && r.d.dbs.length === 6 ? r.d.dbs : null;
-          return [{ content: String(ri + 1), styles: { halign: 'center' } }, r.d.n + '\n' + cityPl(r.d), { content: dn ? fmt(Math.round(dn[0])) : '–', styles: { halign: 'center' } }, { content: dn ? fmt(Math.round(dn[4])) : '–', styles: { halign: 'center', fontStyle: 'bold' } }, { content: String(r.miss), styles: { halign: 'center', fontStyle: 'bold' } }, ml.length ? modTxt(ml, false) : 'Eksik model yoktur'];
+          return [{ content: String(ri + 1), styles: { halign: 'center' } }, r.d.n + '\n' + cityPl(r.d), { content: dn ? fmt(Math.round(dn[0])) : '–', styles: { halign: 'center' } }, { content: dn ? fmt(Math.round(dn[4])) : '–', styles: { halign: 'center', fontStyle: 'bold' } }, { content: LIM_L[limState(r.d)].replace('Limit ', ''), styles: { halign: 'center', fontStyle: 'bold', textColor: limState(r.d) === 'A' ? [27, 94, 47] : limState(r.d) === 'K' ? [198, 47, 36] : GREY } }, { content: String(r.miss), styles: { halign: 'center', fontStyle: 'bold' } }, ml.length ? modTxt(ml, false) : 'Eksik model yoktur'];
         });
         var dsm = function (k) { return fmt(Math.round(sum(sel.map(function (r) { return r.d.dbs && r.d.dbs.length === 6 ? r.d.dbs[k] : 0; })))); };
-        pdfTable(doc, y, { head: ['No', 'Bayi Adı', 'Tanımlı DBS (TL)', 'Toplam KDV Dahil (TL)', 'Eksik model sayısı', 'Bayiye faturalı ve konsinyede olmayan modeller'], body: bd2, foot: ['', { content: 'Toplam (' + sel.length + ' bayi)', styles: { halign: 'left' } }, { content: dsm(0), styles: { halign: 'center' } }, { content: dsm(4), styles: { halign: 'center' } }, { content: fmt(sum(sel.map(function (r) { return r.miss; }))), styles: { halign: 'center' } }, ''], cs: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 46 }, 2: { cellWidth: 22 }, 3: { cellWidth: 24 }, 4: { cellWidth: 17 } } });
+        pdfTable(doc, y, { head: ['No', 'Bayi Adı', 'Tanımlı DBS (TL)', 'Toplam KDV Dahil (TL)', 'DBS limiti', 'Eksik model sayısı', 'Bayiye faturalı ve konsinyede olmayan modeller'], body: bd2, foot: ['', { content: 'Toplam (' + sel.length + ' bayi)', styles: { halign: 'left' } }, { content: dsm(0), styles: { halign: 'center' } }, { content: dsm(4), styles: { halign: 'center' } }, '', { content: fmt(sum(sel.map(function (r) { return r.miss; }))), styles: { halign: 'center' } }, ''], cs: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 44 }, 2: { cellWidth: 21 }, 3: { cellWidth: 23 }, 4: { cellWidth: 16 }, 5: { cellWidth: 16 } } });
       }
     } else {
       var bd3 = [];
@@ -2968,7 +3034,7 @@ span.no { margin-right: 5px; }
       if (v === 'matrix') {
         var mr = S.onlyMiss ? rows.filter(function (r) { return r.miss > 0; }) : rows;
         var bm = mr.map(function (r, j) {
-          var line = [j + 1, r.d.c, r.d.n, r.d.s, r.d.pl, dnum(r.d, 0), dnum(r.d, 4)];
+          var line = [j + 1, r.d.c, r.d.n, r.d.s, r.d.pl, dnum(r.d, 0), dnum(r.d, 4), LIM_L[limState(r.d)]];
           mods.forEach(function (i) {
             var s = status(r.d, i), sm = splitMode() && r.d.d && r.d.k;
             line.push(s === 'miss' ? 'YOK' : s === 'unk' ? '–' : sm ? 'Faturalı ' + r.d.d[i] + ' · Konsinye ' + r.d.k[i] : total(r.d, i));
@@ -2976,18 +3042,18 @@ span.no { margin-right: 5px; }
           line.push(known(r.d) ? r.miss : 'bilinmiyor');
           return line;
         });
-        var wd = [6, 12, 34, 14, 20, 15, 17].concat(mods.map(function () { return splitMode() ? 26 : 12; })).concat([12]);
-        sheet('Tablo', ['No', 'Bayi kodu', 'Bayi Adı', 'Şehir', 'Plasiyer', 'Tanımlı DBS (TL)', 'Toplam KDV Dahil (TL)'].concat(mods.map(function (i) { return ds.models[i].n; })).concat(['Eksik model sayısı']), bm, wd,
-          ['Toplam (' + mr.length + ' bayi)', '', '', '', '', sumAll(mr, function (r) { return dnum(r.d, 0); }), sumAll(mr, function (r) { return dnum(r.d, 4); })].concat(mods.map(function () { return ''; })).concat([sumAll(mr, function (r) { return known(r.d) ? r.miss : 0; })]),
-          { left: [3], num: [6, 7], freeze: 3, cell: function (row, r) { mods.forEach(function (i, j) { var cl = row.getCell(8 + j); if (cl.value === 'YOK') { cl.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFBE3E0' } }; cl.font = { bold: true, color: { argb: 'FFA3231A' } }; } }); } });
+        var wd = [6, 12, 34, 14, 20, 15, 17, 16].concat(mods.map(function () { return splitMode() ? 26 : 12; })).concat([12]);
+        sheet('Tablo', ['No', 'Bayi kodu', 'Bayi Adı', 'Şehir', 'Plasiyer', 'Tanımlı DBS (TL)', 'Toplam KDV Dahil (TL)', 'DBS limiti'].concat(mods.map(function (i) { return ds.models[i].n; })).concat(['Eksik model sayısı']), bm, wd,
+          ['Toplam (' + mr.length + ' bayi)', '', '', '', '', sumAll(mr, function (r) { return dnum(r.d, 0); }), sumAll(mr, function (r) { return dnum(r.d, 4); }), ''].concat(mods.map(function () { return ''; })).concat([sumAll(mr, function (r) { return known(r.d) ? r.miss : 0; })]),
+          { left: [3], num: [6, 7], freeze: 3, cell: function (row, r) { mods.forEach(function (i, j) { var cl = row.getCell(9 + j); if (cl.value === 'YOK') { cl.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFBE3E0' } }; cl.font = { bold: true, color: { argb: 'FFA3231A' } }; } }); } });
       } else if (v === 'bayi') {
         var sel = S.q ? rows : rows.filter(function (r) { return r.miss > 0; });
         var bb = sel.map(function (r, ri) {
           var ml = mods.filter(function (i) { return status(r.d, i) === 'miss'; });
-          return [ri + 1, r.d.c, r.d.n, r.d.s, r.d.pl, dnum(r.d, 0), dnum(r.d, 4), r.miss, ml.length ? modTxt(ml, false) : 'Eksik model yoktur'];
+          return [ri + 1, r.d.c, r.d.n, r.d.s, r.d.pl, dnum(r.d, 0), dnum(r.d, 4), LIM_L[limState(r.d)], r.miss, ml.length ? modTxt(ml, false) : 'Eksik model yoktur'];
         });
-        sheet('Bayiye göre eksikler', ['No', 'Bayi kodu', 'Bayi Adı', 'Şehir', 'Plasiyer', 'Tanımlı DBS (TL)', 'Toplam KDV Dahil (TL)', 'Eksik model sayısı', 'Bayiye faturalı ve konsinyede olmayan modeller'], bb, [6, 12, 34, 14, 20, 15, 17, 12, 60],
-          ['Toplam (' + sel.length + ' bayi)', '', '', '', '', sumAll(sel, function (r) { return dnum(r.d, 0); }), sumAll(sel, function (r) { return dnum(r.d, 4); }), sumAll(sel, function (r) { return r.miss; }), ''], { left: [3, 9], wrap: [9], num: [6, 7], freeze: 3 });
+        sheet('Bayiye göre eksikler', ['No', 'Bayi kodu', 'Bayi Adı', 'Şehir', 'Plasiyer', 'Tanımlı DBS (TL)', 'Toplam KDV Dahil (TL)', 'DBS limiti', 'Eksik model sayısı', 'Bayiye faturalı ve konsinyede olmayan modeller'], bb, [6, 12, 34, 14, 20, 15, 17, 16, 12, 60],
+          ['Toplam (' + sel.length + ' bayi)', '', '', '', '', sumAll(sel, function (r) { return dnum(r.d, 0); }), sumAll(sel, function (r) { return dnum(r.d, 4); }), '', sumAll(sel, function (r) { return r.miss; }), ''], { left: [3, 10], wrap: [10], num: [6, 7], freeze: 3 });
       } else {
         var bd = [];
         mods.forEach(function (i) {
@@ -3036,7 +3102,7 @@ span.no { margin-right: 5px; }
   var EKK = { BAJAJ: 'b', 'KANUNİ': 'k', ALL: 'a' };
   function ekRows() {
     var mods = { b: visModels('BAJAJ'), k: visModels('KANUNİ'), a: visModels('ALL') };
-    return ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && bolgeOk(d) && searchMatch(d, S.eq, S.eqm); })
+    return ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && fOk(d) && searchMatch(d, S.eq, S.eqm); })
       .slice().sort(function (a, b) { return a.n.localeCompare(b.n, 'tr'); })
       .map(function (d) {
         var o = { d: d };
@@ -3080,7 +3146,7 @@ span.no { margin-right: 5px; }
     return '<div class="ekd">' + left + right + '</div>';
   }
   function ekItem(r, n) {
-    return '<details class="sd"' + (S.eOpen ? ' open' : '') + '><summary><div class="ekrow"><span class="nm"><b><span class="no">' + n + '.</span>' + esc(r.d.n) + '</b><small>' + esc(r.d.s) + ' · ' + esc(r.d.pl) + '</small></span><span class="ekch">' +
+    return '<details class="sd"' + (S.eOpen ? ' open' : '') + '><summary><div class="ekrow"><span class="nm"><b><span class="no">' + n + '.</span>' + esc(r.d.n) + '</b><small>' + esc(r.d.s) + ' · ' + esc(r.d.pl) + '</small>' + limChip(r.d) + '</span><span class="ekch">' +
       ekChip('Bajaj', r.b) + ekChip('Kanuni', r.k) + ekChip('Genel', r.a, true) + '</span></div></summary><div class="sdb">' + ekDetail(r.d) + '</div></details>';
   }
   function ekListHtml(rows) {
@@ -3179,6 +3245,130 @@ span.no { margin-right: 5px; }
       if (ok) toast('Dosya hazır: ' + name);
     } catch (e) { if (!e || e.code !== 'declined') toast('Dosya oluşturulamadı' + (e && e.message ? ': ' + e.message : '')); }
     finally { busy('#ekBody .tbar button', false); }
+  }
+
+  /* ----- DBS Limitleri menüsü ----- */
+  var DL_TITLE = 'DBS Limitleri';
+  function dlRows() {
+    var list = ds.dealers.filter(function (d) { return (S.pk === 'ALL' || d.pk === S.pk) && fOk(d) && searchMatch(d, S.dq, S.dqm); }).map(mkRow);
+    var z = function (v, big) { return v == null ? big : v; };
+    list.sort(function (a, b) {
+      var c = 0;
+      if (S.dsort === 'fark_asc') c = z(a.d5, 1e18) - z(b.d5, 1e18);
+      else if (S.dsort === 'fark_desc') c = z(b.d5, -1e18) - z(a.d5, -1e18);
+      else if (S.dsort === 'kdv') c = z(b.d4, 0) - z(a.d4, 0);
+      else if (S.dsort === 'stok') c = b.t - a.t;
+      else if (S.dsort === 'sat') c = z(b.st0, 0) - z(a.st0, 0);
+      return c || a.d.n.localeCompare(b.d.n, 'tr');
+    });
+    return list;
+  }
+  function dlInfo() { return pkTxt() + (S.dq ? ' · ' + qDesc(S.dq, S.dqm) : ''); }
+  function dlBoxes(rows) {
+    var c = function (s) { return rows.filter(function (r) { return limState(r.d) === s; }).length; }, u = c('U');
+    var b = [
+      { g: 1, t: 'Bayi sayısı', r: [['Bayi', fmt(rows.length), 1]] },
+      { g: 4, t: 'DBS limiti', r: [['Limit açık', fmt(c('A'))], ['Limit kapalı', fmt(c('K'))]].concat(u ? [['Bilgi yok', fmt(u)]] : []).concat([['Toplam', fmt(rows.length), 1]]) },
+      { g: 4, t: 'DBS (TL)', r: [['Tanımlı DBS', dv(dsum(rows, 'd0'))], ['DBS Limit', dv(dsum(rows, 'd1'))], ['Toplam KDV Dahil', dv(dsum(rows, 'd4'))]] }
+    ];
+    return b;
+  }
+  function dlSalesLab(i) { return yLabel(i).replace(' Satış Adedi', '') + ' satış'; }
+  function dlMt(lab, val, cls) { return '<span class="dlmt' + (cls ? ' ' + cls : '') + '"><i>' + esc(lab) + '</i><b>' + val + '</b></span>'; }
+  function dlItem(r, n) {
+    var d = r.d, ys = SY(), neg = r.d5 != null && r.d5 < 0;
+    var m = dlMt('Tanımlı DBS', esc(dv(r.d0))) + dlMt('DBS Limit', esc(dv(r.d1))) + dlMt('Toplam KDV Dahil', esc(dv(r.d4))) + dlMt('Fark', esc(dv(r.d5)), neg ? 'neg' : '') +
+      dlMt('Faturalı stok', esc(fmt(r.f)), 'st') + dlMt('Konsinye', esc(fmt(r.k)), 'st') + dlMt('Toplam stok', esc(fmt(r.t)), 'st') +
+      ys.map(function (y, i) { return dlMt(dlSalesLab(i), r['st' + i] == null ? '–' : esc(fmt(r['st' + i])), 'sl'); }).join('');
+    return '<details class="sd"' + (S.dlOpen ? ' open' : '') + '><summary><div class="dlrow"><span class="nm"><b><span class="no">' + n + '.</span>' + esc(d.n) + '</b><small>' + esc(STATIC ? cityPl(d) : d.s + ' · ' + d.pl) + '</small></span>' + limChip(d) + '<span class="dlm">' + m + '</span></div></summary><div class="sdb dlx">' + analizDetailHtml(d) + '</div></details>';
+  }
+  function dlListHtml(rows) {
+    if (!rows.length) return '<div class="panel empty">' + (S.dq ? '“' + esc(S.dq) + '” aramasına uyan bayi bulunamadı.' + qHint(S.dqm) : 'Bu süzgeçle listelenecek bayi yok.') + '</div>';
+    return '<div class="ekl">' + rows.map(function (r, i) { return dlItem(r, i + 1); }).join('') + '</div>';
+  }
+  function dlIntro(n) {
+    return '<div class="rintro"><b>' + DL_TITLE + '</b><br><span>' + fmt(n) + ' bayi listeleniyor. Fark = DBS Limit − Toplam KDV Dahil; Fark en az 150.000 TL değilse (negatif dahil) limit yoktur (Limit Kapalı), en az 150.000 TL ise Limit Açık. Bayi adına dokunun: DBS durumu, model stokları (bayiye faturalı / konsinye) ve aylık satış adetleri açılır.</span></div>';
+  }
+  function dlToolbar() {
+    var b = function (a, lab, cls) { return '<button type="button" class="btn' + (cls ? ' ' + cls : '') + '" data-dexp="' + a + '">' + lab + '</button>'; };
+    return '<div class="tbar">' + b('pdf', 'PDF indir', 'primary') + b('xlsx', 'Excel') + b('html', 'HTML') + '<button type="button" class="btn" data-dopen="1">' + (S.dlOpen ? 'Tümünü kapat' : 'Tümünü aç') + '</button></div>';
+  }
+  function dlBody(rows) {
+    return dlIntro(rows.length) + salesNote() + '<div class="ekbx">' + summaryHtml(dlBoxes(rows).concat(summaryBoxes(rows))) + '</div>' + dlListHtml(rows);
+  }
+  function renderDl() {
+    CTX = 'dbsl';
+    if ($('dlSort').value !== S.dsort) $('dlSort').value = S.dsort;
+    var rows = dlRows();
+    $('dlBody').innerHTML = dlToolbar() + dlBody(rows);
+  }
+  function dlSnapshot() {
+    var keep = STATIC; CTX = 'dbsl'; STATIC = true;
+    try { return pageHtml(DL_TITLE, dlInfo(), dlBody(dlRows())); }
+    finally { STATIC = keep; }
+  }
+  function pdfDl() {
+    CTX = 'dbsl';
+    var rows = dlRows(), doc = pdfNew('l'), ys = SY();
+    var y = pdfHead(doc, 25, DL_TITLE, [dlInfo() + ' · ' + rows.length + ' bayi', 'Fark = DBS Limit − Toplam KDV Dahil. Fark en az 150.000 TL değilse (negatif dahil) limit yoktur (Limit Kapalı), değilse Limit Açık.']);
+    y = pdfBoxes(doc, y, dlBoxes(rows), 1);
+    y = pdfBoxes(doc, y, summaryBoxes(rows), 1);
+    var cn = function (txt, g) { return { content: txt, styles: { halign: 'center', fontStyle: 'bold', textColor: g === 'A' ? [27, 94, 47] : g === 'K' ? [198, 47, 36] : GREY } }; };
+    var head = ['No', 'Bayi Adı', 'DBS limiti', 'Tanımlı DBS', 'DBS Limit', 'Bayiye Faturalı', 'Konsinye', 'Toplam KDV Dahil', 'Fark', 'Faturalı stok', 'Konsinye stok', 'Toplam stok'].concat(ys.map(function (yy, i) { return dlSalesLab(i); }));
+    var hd = head.map(function (x, i) { return i >= 9 && i <= 11 ? gHead(x, 1) : i >= 3 && i <= 8 ? gHead(x, 4) : i >= 12 ? gHead(x, gOf(i - 12)) : { content: x, styles: { fillColor: HDR, textColor: [255, 255, 255], halign: 'center' } }; });
+    var body = rows.map(function (r, ri) {
+      ZODD = ri % 2 === 1;
+      var s = limState(r.d), neg = r.d5 != null && r.d5 < 0;
+      var line = [{ content: String(ri + 1), styles: { halign: 'center' } }, { content: r.d.n + ', ' + r.d.s + ', ' + r.d.pl, styles: { halign: 'left' } }, cn(LIM_L[s].replace('Limit ', ''), s)];
+      [0, 1, 2, 3, 4, 5].forEach(function (i) { var c = gCell(dv(r['d' + i]), 4, i === 4); if (i === 5 && neg) c.styles.textColor = [198, 47, 36]; line.push(c); });
+      line.push(gCell(fmt(r.f), 1), gCell(fmt(r.k), 1), gCell(fmt(r.t), 1, true));
+      ys.forEach(function (yy, i) { line.push(gCell(nn(r['st' + i]), gOf(i), true)); });
+      return line;
+    });
+    ZODD = false;
+    var ft = [{ content: 'Genel toplam (' + rows.length + ' bayi)', colSpan: 3, styles: { halign: 'left' } }].concat(dbSums(rows).map(function (v) { return dv(v); })).concat([fmt(sum(rows.map(function (r) { return r.f; }))), fmt(sum(rows.map(function (r) { return r.k; }))), fmt(sum(rows.map(function (r) { return r.t; })))]).concat(ys.map(function (yy, i) { return nn(sAll(rows, i)); }));
+    ft = ft.map(function (c) { return typeof c === 'object' ? c : { content: c, styles: { halign: 'center' } }; });
+    var cs = { 0: { cellWidth: 8, halign: 'center' }, 1: { halign: 'left' }, 2: { cellWidth: 14 } };
+    [18, 18, 19, 17, 20, 18, 12, 12, 12].forEach(function (w, i) { cs[3 + i] = { cellWidth: w, halign: 'center' }; });
+    ys.forEach(function (yy, i) { cs[12 + i] = { cellWidth: 17, halign: 'center' }; });
+    if (!rows.length) { doc.setFont('Inter', 'normal'); doc.setFontSize(11); tc(doc, GREY); doc.text('Bu süzgeçle listelenecek bayi yok.', 14, y + 6); }
+    else doc.autoTable({
+      startY: y, head: [hd], body: body, foot: [ft], showFoot: 'lastPage', theme: 'grid', margin: { top: 22, bottom: 14, left: 14, right: 14 }, rowPageBreak: 'avoid',
+      styles: { font: 'Inter', fontSize: 7, cellPadding: 0.8, textColor: INK, lineColor: LINEC, lineWidth: .2, valign: 'middle', overflow: 'linebreak' },
+      headStyles: { fontStyle: 'bold', halign: 'center' }, footStyles: { fillColor: SOFT, textColor: INK, fontStyle: 'bold' }, alternateRowStyles: { fillColor: ZEBRA }, columnStyles: cs
+    });
+    if (S.dq && rows.length) rows.forEach(function (r) { pdfDealerPage(doc, r.d, false); });
+    pdfChrome(doc, DL_TITLE);
+    return doc;
+  }
+  function buildDlWorkbook() {
+    CTX = 'dbsl';
+    var rows = dlRows(), ys = SY(), wb = new ExcelJS.Workbook(); wb.creator = 'ORACLE BAYİ STOK RAPORU'; wb.created = new Date();
+    var c = function (s) { return rows.filter(function (r) { return limState(r.d) === s; }).length; };
+    var w1 = wb.addWorksheet('Özet'); w1.addRow(['Alan', 'Değer']);
+    [['Rapor', DL_TITLE], ['Süzgeç', dlInfo()], ['Kural', 'Fark = DBS Limit - Toplam KDV Dahil. Fark en az 150.000 TL değilse (negatif dahil) limit yoktur (Limit Kapalı), değilse Limit Açık. 150.000 TL en ucuz motor tutarıdır.'], ['Bayi sayısı', rows.length], ['Limit açık bayi', c('A')], ['Limit kapalı bayi', c('K')], ['Limit bilgisi olmayan bayi', c('U')],
+      ['Toplam Tanımlı DBS (TL)', dsum(rows, 'd0')], ['Toplam DBS Limit (TL)', dsum(rows, 'd1')], ['Toplam KDV Dahil (TL)', dsum(rows, 'd4')], ['Güncel veri girişi', dataStamp(ds.asOf)]].forEach(function (r) { w1.addRow(r); });
+    widths(w1, [34, 90]);
+    var wl = wb.addWorksheet('DBS Limitleri');
+    wl.addRow(['Plasiyer', 'Bayi kodu', 'Bayi Adı', 'Şehir', 'DBS limiti', 'Tanımlı DBS (TL)', 'DBS Limit (TL)', 'Bayiye Faturalı (TL)', 'Konsinye (TL)', 'Toplam KDV Dahil (TL)', 'Fark (TL)', 'Faturalı stok (adet)', 'Konsinye stok (adet)', 'Toplam stok (adet)'].concat(ys.map(function (y, i) { return dlSalesLab(i) + ' (adet)'; })));
+    rows.forEach(function (r) { wl.addRow([r.d.pk + ' ' + r.d.pl, r.d.c, r.d.n, r.d.s, LIM_L[limState(r.d)], r.d0, r.d1, r.d2, r.d3, r.d4, r.d5, r.f, r.k, r.t].concat(ys.map(function (y, i) { return r['st' + i] == null ? '' : r['st' + i]; }))); });
+    widths(wl, [26, 12, 34, 14, 17, 17, 17, 17, 17, 19, 17, 14, 14, 14].concat(ys.map(function () { return 18; }))); wl.views = [{ state: 'frozen', ySplit: 1 }]; wl.autoFilter = { from: 'A1', to: { row: 1, column: 14 + ys.length } };
+    var wm = wb.addWorksheet('Model Stokları');
+    wm.addRow(['Bayi Adı', 'İl', 'DBS limiti', 'Marka', 'Model', 'Faturalı', 'Konsinye', 'Toplam']);
+    rows.forEach(function (r) { detailModels(r.d).forEach(function (x) { wm.addRow([r.d.n, r.d.s, LIM_L[limState(r.d)], bname(ds.models[x.i].b), ds.models[x.i].n, x.f, x.k, x.t]); }); });
+    widths(wm, [34, 14, 17, 10, 22, 11, 11, 11]); wm.views = [{ state: 'frozen', ySplit: 1 }]; wm.autoFilter = { from: 'A1', to: 'H1' };
+    return numberSheets(polish(wb));
+  }
+  async function dlExport(kind) {
+    var base = 'dbs-limitleri' + (S.dlim === 'ALL' ? '' : S.dlim === 'A' ? '-acik' : '-kapali') + (S.pk === 'ALL' ? '' : '-' + slug(S.pk)) + (S.dq ? '-' + slug(S.dq) : '') + '-' + stamp(), name, ok;
+    busy('#dlBody .tbar button', true);
+    try {
+      if (kind === 'xlsx') { name = base + '.xlsx'; var buf = await buildDlWorkbook().xlsx.writeBuffer(); ok = await saveFile(name, buf, XLSX_MIME, true); }
+      else if (kind === 'html') { name = base + '.html'; ok = await saveFile(name, dlSnapshot(), 'text/html', true); }
+      else { await loadPdf(); name = base + '.pdf'; ok = await saveFile(name, pdfDl().output('arraybuffer'), 'application/pdf', true); }
+      if (ok) toast('Dosya hazır: ' + name);
+    } catch (e) { if (!e || e.code !== 'declined') toast('Dosya oluşturulamadı' + (e && e.message ? ': ' + e.message : '')); }
+    finally { busy('#dlBody .tbar button', false); }
   }
 
   function mstokData() {
@@ -3353,9 +3543,9 @@ span.no { margin-right: 5px; }
       render();
     });
   }
-  seg('bolgeSeg', 'bolge'); seg('brandSeg', 'brand'); seg('viewSeg', 'view'); seg('repSeg', 'dlRep');
+  seg('bolgeSeg', 'bolge'); seg('dlimSeg', 'dlim'); seg('brandSeg', 'brand'); seg('viewSeg', 'view'); seg('repSeg', 'dlRep');
   $('selPk').addEventListener('change', function (e) { S.pk = e.target.value; render(); });
-  [['qMode', 'qm', 'q', 'qLbl', function () { render(); }], ['aqMode', 'aqm', 'aq', 'aqLbl', function () { renderAnaliz(); }], ['kqMode', 'kqm', 'kq', 'kqLbl', function () { renderKarne(); }], ['eqMode', 'eqm', 'eq', 'eqLbl', function () { renderEk(); }]].forEach(function (a) {
+  [['qMode', 'qm', 'q', 'qLbl', function () { render(); }], ['aqMode', 'aqm', 'aq', 'aqLbl', function () { renderAnaliz(); }], ['kqMode', 'kqm', 'kq', 'kqLbl', function () { renderKarne(); }], ['eqMode', 'eqm', 'eq', 'eqLbl', function () { renderEk(); }], ['dqMode', 'dqm', 'dq', 'dqLbl', function () { renderDl(); }]].forEach(function (a) {
     $(a[0]).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S[a[1]] = b.dataset.v; syncMode(a[0], a[1], a[2], a[3]); a[4](); });
     syncMode(a[0], a[1], a[2], a[3]);
   });
@@ -3365,7 +3555,7 @@ span.no { margin-right: 5px; }
   $('main').addEventListener('click', function (e) {
     var b = e.target.closest('[data-sort],[data-tab],#btnOpenAll,#btnClearF');
     if (!b) return;
-    if (b.id === 'btnClearF') { S.pk = 'ALL'; S.bolge = 'ALL'; Array.prototype.forEach.call($('bolgeSeg').children, function (x) { x.setAttribute('aria-pressed', x.dataset.v === 'ALL' ? 'true' : 'false'); }); S.onlyMiss = false; $('selPk').value = 'ALL'; $('onlyMiss').checked = false; render(); return; }
+    if (b.id === 'btnClearF') { S.pk = 'ALL'; S.bolge = 'ALL'; S.dlim = 'ALL'; Array.prototype.forEach.call($('dlimSeg').children, function (x) { x.setAttribute('aria-pressed', x.dataset.v === 'ALL' ? 'true' : 'false'); }); Array.prototype.forEach.call($('bolgeSeg').children, function (x) { x.setAttribute('aria-pressed', x.dataset.v === 'ALL' ? 'true' : 'false'); }); S.onlyMiss = false; $('selPk').value = 'ALL'; $('onlyMiss').checked = false; render(); return; }
     if (b.id === 'btnOpenAll') { S.openAll = !S.openAll; render(); return; }
     if (b.dataset.tab) { S.stokTab = b.dataset.tab; render(); return; }
     var p = b.dataset.sort.split(':'), st = S.sort[p[0]];
@@ -3400,6 +3590,14 @@ span.no { margin-right: 5px; }
   });
   [['efSeg', 'ef'], ['ebSeg', 'eb']].forEach(function (a) {
     $(a[0]).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S[a[1]] = b.dataset.v; renderEk(); });
+  });
+  $('dlSort').addEventListener('change', function (e) { S.dsort = e.target.value; renderDl(); });
+  var dqt; $('dq').addEventListener('input', function (e) { clearTimeout(dqt); dqt = setTimeout(function () { S.dq = e.target.value; renderDl(); }, 120); });
+  $('dlBody').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-dexp],[data-dopen]');
+    if (!b) return;
+    if (b.dataset.dexp) { dlExport(b.dataset.dexp); return; }
+    S.dlOpen = !S.dlOpen; renderDl();
   });
   var eqt; $('eq').addEventListener('input', function (e) { clearTimeout(eqt); eqt = setTimeout(function () { S.eq = e.target.value; renderEk(); }, 120); });
   $('ekBody').addEventListener('click', function (e) {
