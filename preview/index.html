@@ -715,6 +715,8 @@ span.no { margin-right: 5px; }
 @media print { .rt th.no, .rt td.no { width: 14px !important; min-width: 0 !important; padding: 1px 2px !important; } }
 @media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s; } }
 
+.card h3 .lnk { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: var(--line, #9bb); text-underline-offset: 3px; }
+.card h3 .lnk:hover { color: #0b5cab; text-decoration-color: currentColor; }
 /* ---- Kompakt ana sayfa: menü, özet kutuları ve süzgeçler (yalnız ekran) ---- */
 @media screen {
   body { font-size: 15.5px; padding-block: 10px 40px; }
@@ -1630,7 +1632,7 @@ span.no { margin-right: 5px; }
         var chip = '<span class="chip' + (s === 'unk' ? ' unk' : '') + '"><span class="br">' + esc(m.b === 'BAJAJ' ? 'Bajaj' : 'Kanuni') + '</span>' + esc(m.n) + '</span>';
         if (s === 'miss') missC += chip; else if (s === 'unk') unkC += chip;
       });
-      h += '<div class="card"><h3><span class="no">' + (ri + 1) + '.</span>' + esc(r.d.n) + '<small>' + (STATIC ? esc(cityPl(r.d)) : esc(r.d.s) + ' · ' + esc(r.d.c)) + '</small></h3>' + dbsLine(r.d);
+      h += '<div class="card"><h3><span class="no">' + (ri + 1) + '.</span>' + (STATIC ? esc(r.d.n) : '<button type="button" class="lnk" data-gokarne="' + esc(r.d.c) + '" title="Bayi karnesini aç">' + esc(r.d.n) + '</button>') + '<small>' + (STATIC ? esc(cityPl(r.d)) : esc(r.d.s) + ' · ' + esc(r.d.c)) + '</small></h3>' + dbsLine(r.d);
       if (missC) h += '<div class="subl">Bayiye faturalı ve konsinye yok (' + r.miss + ')</div><div class="chips" style="margin-top:4px">' + missC + '</div>';
       if (unkC) h += '<div class="subl">Bayiye faturalı yok, stok bilgisi dosyada yok (' + r.unk + ')</div><div class="chips" style="margin-top:4px">' + unkC + '</div>';
       if (!missC && !unkC) h += '<div class="subl">Eksik model yok: tüm modeller bayide mevcut.</div>';
@@ -3624,6 +3626,10 @@ span.no { margin-right: 5px; }
     else if (st.key === p[1]) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
     else { st.key = p[1]; st.dir = p[1] === 'name' ? 'asc' : 'desc'; }
     render();
+  });
+  document.addEventListener('click', function (e) {
+    var g = e.target.closest ? e.target.closest('[data-gokarne]') : null; if (!g) return;
+    S.menu = 'karne'; S.kd = g.dataset.gokarne; S.kq = ''; render(); window.scrollTo(0, 0);
   });
   $('nav').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b || !b.dataset.menu) return;
