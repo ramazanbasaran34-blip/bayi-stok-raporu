@@ -1342,7 +1342,7 @@ span.no { margin-right: 5px; }
   var ds = null, raw = null;
   var STANDALONE = true;
   var STATIC = false;
-  var S = { bolge: 'ALL', dlim: 'ALL', dq: '', dqm: 'name', dsort: 'name', dlOpen: false, menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kq: '', qm: 'name', aqm: 'name', kqm: 'name', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' }, mstok: { key: 't', dir: 'desc' } }, mOpen: false, ef: 'none', eb: 'ALL', eq: '', eqm: 'name', eOpen: false };
+  var S = { bolge: 'ALL', dlim: 'ALL', dq: '', dqm: 'name', dsort: 'name', dlOpen: false, menu: 'eksik', dlRep: 'eksik', dsub: 'eksik', dfmt: 'xlsx', dd: 'ALL', dopen: false, aq: '', aDealer: null, kd: 'ALL', kFrom: null, kq: '', qm: 'name', aqm: 'name', kqm: 'name', brand: 'ALL', pk: 'ALL', q: '', view: 'matrix', onlyMiss: false, split: false, openAll: false, stokTab: 'bayi', sort: { bayi: { key: 'default', dir: 'desc' }, model: { key: 'default', dir: 'desc' }, analiz: { key: 'name', dir: 'asc' }, mstok: { key: 't', dir: 'desc' } }, mOpen: false, ef: 'none', eb: 'ALL', eq: '', eqm: 'name', eOpen: false };
   var $ = function (id) { return document.getElementById(id); };
   var norm = core.norm;
   var fmt = function (n) { return Number(n).toLocaleString('tr-TR'); };
@@ -2453,7 +2453,7 @@ span.no { margin-right: 5px; }
   function karneToolbar(one, n) {
     var b = function (a, lab, cls) { return '<button type="button" class="btn' + (cls ? ' ' + cls : '') + '" data-kexp="' + a + '">' + lab + '</button>'; };
     var h = '<div class="tbar">';
-    if (one) h += '<button type="button" class="btn" data-kback="1">← Tüm bayiler</button>';
+    if (one) h += '<button type="button" class="btn" data-kback="1">' + (S.kFrom ? '← Geri dön · ' + (S.kFrom.t || '') : '← Tüm bayiler') + '</button>';
     h += b('pdf', 'PDF · A4 yatay', 'primary') + b('xlsx', 'Excel') + b('html', 'HTML');
     return h + '</div><div class="hint">' + (one ? 'Çıktıda bu bayinin tüm bilgileri var: stok, yıllara göre satış, model detayları, DBS durumu ve eksik modeller.' : 'Çıktıda her bayi ayrı bir A4 yatay sayfada (' + fmt(n) + ' bayi): stok, yıllara göre satış, model detayları, DBS durumu ve eksik modeller.') + ' Dosyalar farklı kaydet penceresiyle istediğiniz klasöre kaydedilir.</div>';
   }
@@ -3629,11 +3629,11 @@ span.no { margin-right: 5px; }
   });
   document.addEventListener('click', function (e) {
     var g = e.target.closest ? e.target.closest('[data-gokarne]') : null; if (!g) return;
-    S.menu = 'karne'; S.kd = g.dataset.gokarne; S.kq = ''; render(); window.scrollTo(0, 0);
+    S.kFrom = { m: S.menu, y: window.pageYOffset, t: 'Eksik Modeller' }; S.menu = 'karne'; S.kd = g.dataset.gokarne; S.kq = ''; render(); window.scrollTo(0, 0);
   });
   $('nav').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b || !b.dataset.menu) return;
-    S.menu = b.dataset.menu; render();
+    S.kFrom = null; S.menu = b.dataset.menu; render();
     window.scrollTo(0, 0);
   });
   $('btnExport').addEventListener('click', exportXlsx);
@@ -3673,14 +3673,17 @@ span.no { margin-right: 5px; }
     if (b.dataset.eexp) { ekExport(b.dataset.eexp); return; }
     S.eOpen = !S.eOpen; renderEk();
   });
-  $('selKarne').addEventListener('change', function (e) { S.kd = e.target.value; renderKarne(); });
+  $('selKarne').addEventListener('change', function (e) { S.kFrom = null; S.kd = e.target.value; renderKarne(); });
   var kqt; $('kq').addEventListener('input', function (e) { clearTimeout(kqt); kqt = setTimeout(function () { S.kq = e.target.value; renderKarne(); }, 120); });
   $('karneBody').addEventListener('click', function (e) {
     var b = e.target.closest('[data-kdealer],[data-kback],[data-kexp]');
     if (!b) return;
     if (b.dataset.kexp) { karneExport(b.dataset.kexp); return; }
-    if (b.dataset.kdealer) { S.kd = b.dataset.kdealer; renderKarne(); window.scrollTo(0, 0); return; }
-    if (b.dataset.kback) { S.kd = 'ALL'; renderKarne(); window.scrollTo(0, 0); }
+    if (b.dataset.kdealer) { S.kFrom = null; S.kd = b.dataset.kdealer; renderKarne(); window.scrollTo(0, 0); return; }
+    if (b.dataset.kback) {
+      if (S.kFrom) { var f = S.kFrom; S.kFrom = null; S.kd = 'ALL'; S.menu = f.m; render(); window.scrollTo(0, f.y || 0); return; }
+      S.kd = 'ALL'; renderKarne(); window.scrollTo(0, 0);
+    }
   });
   $('analizBody').addEventListener('click', function (e) {
     var b = e.target.closest('[data-sort],[data-adealer],[data-aback],[data-aexp]');
