@@ -716,6 +716,10 @@ span.no { margin-right: 5px; }
 @media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s; } }
 
 .card h3 .lnk { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: var(--line, #9bb); text-underline-offset: 3px; }
+.chip.gk { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.chip.gk:hover { filter: brightness(.95); }
+.dn .lnk { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line, #9bb); }
+.dn .lnk:hover { color: #0b5cab; }
 .card h3 .lnk:hover { color: #0b5cab; text-decoration-color: currentColor; }
 /* ---- Kompakt ana sayfa: menü, özet kutuları ve süzgeçler (yalnız ekran) ---- */
 @media screen {
@@ -1597,7 +1601,7 @@ span.no { margin-right: 5px; }
         var gm = grp.reduce(function (a, x) { return a + x.miss; }, 0);
         h += '<tr class="grp"><td colspan="' + n + '"><span>' + esc(cur) + ' · ' + esc(r.d.pl) + ' · ' + grp.length + ' bayi · ' + gm + ' eksik</span></td></tr>';
       }
-      h += '<tr><th class="dealer" scope="row"><div class="dn"><span><span class="no">' + (ri + 1) + '.</span>' + esc(r.d.n) + '</span>' + (r.miss ? '<span class="pill">' + r.miss + '</span>' : '') + '</div>' +
+      h += '<tr><th class="dealer" scope="row"><div class="dn"><span><span class="no">' + (ri + 1) + '.</span>' + (STATIC ? esc(r.d.n) : '<button type="button" class="lnk" data-gokarne="' + esc(r.d.c) + '" title="Bayi karnesini aç">' + esc(r.d.n) + '</button>') + '</span>' + (r.miss ? '<span class="pill">' + r.miss + '</span>' : '') + '</div>' +
         '<div class="dm">' + (STATIC ? esc(cityPl(r.d)) : esc(r.d.s) + ' · ' + esc(r.d.c)) + limChip(r.d) + (known(r.d) ? '' : '<span class="tag">stok bilgisi yok</span>') + '</div></th>';
       mods.forEach(function (i) {
         var s = status(r.d, i), inner, cls = s;
@@ -1648,7 +1652,7 @@ span.no { margin-right: 5px; }
       rows.forEach(function (r) { var s = status(r.d, i); if (s === 'miss') miss.push(r); else if (s === 'unk') unk.push(r); });
       if (!miss.length && !unk.length) return;
       any = true; cnt0++;
-      var chip = function (r, c) { return '<span class="chip ' + c + '">' + esc(r.d.n) + ' <span class="br">' + esc(STATIC ? cityPl(r.d) : r.d.s) + '</span></span>'; };
+      var chip = function (r, c) { return '<span class="chip ' + c + (STATIC ? '' : ' gk" data-gokarne="' + esc(r.d.c) + '" title="Bayi karnesini aç') + '">' + esc(r.d.n) + ' <span class="br">' + esc(STATIC ? cityPl(r.d) : r.d.s) + '</span></span>'; };
       h += '<div class="card"><h3><span class="no">' + cnt0 + '.</span>' + esc(m.n) + '<small>' + esc(m.b === 'BAJAJ' ? 'Bajaj' : 'Kanuni') + '' + '</small></h3>';
       if (miss.length) h += '<div class="subl">Bayiye faturalı ve konsinye yok (' + miss.length + ' bayi)</div><div class="chips" style="margin-top:4px">' + miss.map(function (r) { return chip(r, ''); }).join('') + '</div>';
       if (unk.length) h += '<div class="subl">Bayiye faturalı yok, stok bilgisi yok (' + unk.length + ' bayi)</div><div class="chips" style="margin-top:4px">' + unk.map(function (r) { return chip(r, 'unk'); }).join('') + '</div>';
